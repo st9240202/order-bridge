@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.4
+// @version      3.2.5
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
@@ -370,11 +370,18 @@
               return Promise.resolve();
             }
             lastCap = { name: base.name, ts: base.ts, source: base.source, items: res.items, errors: res.errors };
-            return OB.Bridge.merge(res.items, { source: base.source, name: name }).then(function (m) {
-              var msg = '✅ 已暫存(' + m.added + ' 個新單號';
-              if (m.dup) msg += ',' + m.dup + ' 個已存在(略過)';
-              msg += ',來源:' + base.source + ')';
-              api.notify(msg);
+            // 彈出選擇視窗:勾選要暫存的項,確認後才合併存入
+            return new Promise(function (resolve) {
+              showConfirm(res.items, res.errors, function (selItems) {
+                if (!selItems.length) { api.notify('⚪ 已取消,未存入'); resolve(); return; }
+                OB.Bridge.merge(selItems, { source: base.source, name: name }).then(function (m) {
+                  var msg = '✅ 已暫存(' + m.added + ' 個新單號';
+                  if (m.dup) msg += ',' + m.dup + ' 個已存在(略過)';
+                  msg += ',來源:' + base.source + ')';
+                  api.notify(msg);
+                  resolve();
+                }).catch(function (e) { api.notify('❌ 暫存失敗:' + e.message); resolve(); });
+              });
             });
           }).catch(function (e) { api.notify('❌ 暫存失敗(' + name + ':' + e.message + ')'); });
         }
@@ -448,9 +455,70 @@
           '.ob-prev table{width:100%;border-collapse:collapse}',
           '.ob-prev td{padding:3px 6px;border-top:1px solid #f0f0f0;vertical-align:top}',
           '.ob-prev td:first-child{white-space:nowrap;color:#555;font-family:monospace}',
-          '.ob-prev .more{padding:4px 6px;color:#999;font-style:italic}'
+          '.ob-prev .more{padding:4px 6px;color:#999;font-style:italic}',
+          '#ob-src-confirm{position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:100000;background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.35);width:520px;max-width:92vw;display:none;font-family:inherit;text-align:left}',
+          '#ob-src-confirm-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99998;display:none}',
+          '#ob-src-confirm h4{margin:0;padding:12px 16px;border-bottom:1px solid #eee;font-size:15px;display:flex;justify-content:space-between;align-items:center}',
+          '#ob-src-confirm .cbody{max-height:52vh;overflow:auto;padding:0 16px}',
+          '#ob-src-confirm table{width:100%;border-collapse:collapse;font-size:12px}',
+          '#ob-src-confirm td{padding:5px 4px;border-bottom:1px solid #f2f2f2;vertical-align:top}',
+          '#ob-src-confirm td:first-child{width:28px}',
+          '#ob-src-confirm .cbill{white-space:nowrap;font-family:monospace;color:#555}',
+          '#ob-src-confirm .cerr{color:#cf1322;font-size:12px;padding:6px 0}',
+          '#ob-src-confirm .cfoot{padding:10px 16px;border-top:1px solid #eee;text-align:right;display:flex;gap:8px;justify-content:flex-end;align-items:center}',
+          '#ob-src-confirm .cfoot label{margin-right:auto;font-size:12px;color:#666;cursor:pointer}',
+          '#ob-src-confirm button{padding:7px 16px;border:1px solid #d9d9d9;border-radius:5px;background:#fff;cursor:pointer;font-size:13px}',
+          '#ob-src-confirm .c-ok{background:#1890ff;color:#fff;border-color:#1890ff}'
         ].join('');
         document.head.appendChild(st);
+
+        // ---------- 匯出選擇視窗:解析後勾選要暫存的項 ----------
+        var confirmMask = document.createElement('div');
+        confirmMask.id = 'ob-src-confirm-mask';
+        document.body.appendChild(confirmMask);
+        var confirmBox = document.createElement('div');
+        confirmBox.id = 'ob-src-confirm';
+        document.body.appendChild(confirmBox);
+        function showConfirm(items, errors, cb) {
+          items = items || [];
+          var html =
+            '<h4><span>📦 選擇要暫存的單號</span>' +
+            '<button id="ob-src-cx" style="border:none;background:none;font-size:18px;cursor:pointer">✕</button></h4>' +
+            '<div class="cbody">' +
+            '<table><tbody>' +
+            items.map(function (it, i) {
+              return '<tr><td><input type="checkbox" class="ob-c-sel" data-i="' + i + '" checked></td>' +
+                '<td class="cbill">' + OB.utils.esc(it.billcode) + '</td>' +
+                '<td>' + OB.utils.esc(it.goods || '') + (it.company ? ' <span style="color:#999">(' + OB.utils.esc(it.company) + ')</span>' : '') + '</td></tr>';
+            }).join('') +
+            '</tbody></table>' +
+            (errors && errors.length ? '<div class="cerr">⚠ ' + errors.map(OB.utils.esc).join('<br>') + '</div>' : '') +
+            '</div>' +
+            '<div class="cfoot"><label><input type="checkbox" id="ob-src-call" checked> 全選</label>' +
+            '<button id="ob-src-ccancel">取消</button>' +
+            '<button class="c-ok" id="ob-src-cok">確認暫存</button></div>';
+          confirmBox.innerHTML = html;
+          confirmMask.style.display = 'block';
+          confirmBox.style.display = 'block';
+          function close() { confirmMask.style.display = 'none'; confirmBox.style.display = 'none'; }
+          function collect() {
+            return confirmBox.querySelectorAll('input.ob-c-sel').length === items.length
+              ? items
+              : items.filter(function (_, i) {
+                  var c = confirmBox.querySelector('input.ob-c-sel[data-i="' + i + '"]');
+                  return c && c.checked;
+                });
+          }
+          function done(list) { close(); cb(list); }
+          $('#ob-src-cx').onclick = function () { done([]); };
+          confirmMask.onclick = function () { done([]); };
+          $('#ob-src-ccancel').onclick = function () { done([]); };
+          $('#ob-src-cok').onclick = function () { done(collect()); };
+          $('#ob-src-call').onchange = function () {
+            var all = this.checked;
+            confirmBox.querySelectorAll('input.ob-c-sel').forEach(function (c) { c.checked = all; });
+          };
+        }
 
         var wrap = document.createElement('div');
         wrap.id = 'ob-src-fabs';
