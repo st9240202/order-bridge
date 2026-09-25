@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.11
+// @version      3.2.12
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
@@ -793,7 +793,8 @@
         '#ob-fab{position:fixed;right:24px;bottom:120px;z-index:99999;border:none;border-radius:50%;width:60px;height:60px;background:#1890ff;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(24,144,255,.4);transition:transform .15s}',
         '#ob-fab:hover{transform:scale(1.08)}',
         '#ob-fab-mgr{position:fixed;right:24px;bottom:196px;z-index:99999;border:none;border-radius:50%;width:44px;height:44px;background:#595959;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.3)}',
-        '#ob-panel{position:fixed;top:0;right:0;width:560px;max-height:100vh;overflow:auto;background:#fff;z-index:99998;box-shadow:-4px 0 20px rgba(0,0,0,.2);padding:20px;box-sizing:border-box}',
+        '#ob-panel-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99997;display:none}',
+        '#ob-panel{position:fixed;left:50%;top:4vh;transform:translateX(-50%);width:min(96vw,1280px);max-height:92vh;overflow:auto;background:#fff;z-index:99998;box-shadow:0 10px 40px rgba(0,0,0,.35);padding:18px 22px;box-sizing:border-box;border-radius:10px}',
         '#ob-panel h3{margin:0 0 12px;font-size:17px}',
         '#ob-panel .ob-close{position:sticky;float:right;top:0;cursor:pointer;font-size:22px;color:#999}',
         '#ob-status{padding:8px 0;font-size:13px;color:#555}',
@@ -838,10 +839,16 @@
       document.body.appendChild(fab);
       document.body.appendChild(fabMgr);
 
-      // ---------- 預覽面板 ----------
+      // ---------- 預覽面板(中央 modal) ----------
+      var panelMask = document.createElement('div');
+      panelMask.id = 'ob-panel-mask';
+      document.body.appendChild(panelMask);
       var panel = document.createElement('div');
       panel.id = 'ob-panel';
       panel.style.display = 'none';
+      function openPanel() { panel.style.display = 'block'; panelMask.style.display = 'block'; }
+      function closePanel() { panel.style.display = 'none'; panelMask.style.display = 'none'; }
+      panelMask.onclick = closePanel;
       panel.innerHTML =
         '<span class="ob-close" data-ob="close">✕</span>' +
         '<h3>導入訂單 → ' + esc(site.name) + ' 預報</h3>' +
@@ -858,7 +865,10 @@
         '<div id="ob-result"></div>' +
         '<div style="margin-top:12px"><button class="primary" data-ob="submit" disabled>開始提交</button>' +
         '<button data-ob="refresh">重新分析</button></div>';
+      document.body.appendChild(panelMask);
       document.body.appendChild(panel);
+      function openPanel() { panel.style.display = 'block'; panelMask.style.display = 'block'; }
+      function closePanel() { panel.style.display = 'none'; panelMask.style.display = 'none'; }
 
       function $(sel, root) { return OB.utils.$(sel, root || panel); }
       function esc(s) { return OB.utils.esc(s); }
@@ -1105,7 +1115,7 @@
         if (!el) return;
         var ob = el.getAttribute && el.getAttribute('data-ob');
         if (!ob) return;
-        if (ob === 'close') panel.style.display = 'none';
+        if (ob === 'close') closePanel();
         else if (ob === 'reload-bridge') {
           autoLoadBridge().then(function (rec) {
             if (!rec) { setStatus('⚠ 暫存區沒有檔案,請先在來源站點導出'); return; }
@@ -1130,7 +1140,7 @@
       });
 
       fab.onclick = function () {
-        panel.style.display = 'block';
+        openPanel();
         state = emptyState();
         refreshBridgeUI();
         autoLoadBridge().then(function (rec) {
