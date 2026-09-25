@@ -477,7 +477,11 @@
           '#ob-src-confirm .cfoot label{margin-right:auto;font-size:12px;color:#666;cursor:pointer}',
           '#ob-src-confirm button{padding:7px 16px;border:1px solid #d9d9d9;border-radius:5px;background:#fff;cursor:pointer;font-size:13px}',
           '#ob-src-confirm .c-ok{background:#1890ff;color:#fff;border-color:#1890ff}',
-          '#ob-src-admin.docked{right:88px;top:50%;transform:translateY(-50%);bottom:auto}'
+          '#ob-src-admin.docked{left:1560px;right:88px;top:12vh;bottom:auto;width:auto;min-width:420px;max-width:640px;max-height:80vh}',
+          '#ob-src-admin.docked *{font-size:13px}',
+          '#ob-src-admin.docked button{font-size:13px;font-family:inherit;color:#333;padding:7px 18px;line-height:1.4}',
+          '#ob-src-admin.docked .ob-prev{font-size:12px;max-height:46vh}',
+          '#ob-src-admin.docked .ob-prev td{padding:6px 8px}'
         ].join('');
         document.head.appendChild(st);
 
@@ -547,7 +551,10 @@
           var tk = document.querySelector('#tb-toolkit-new .tb-toolkit-list-new') || document.querySelector('#tb-toolkit-new');
           if (tk) {
             wrap.classList.add('docked'); admin.classList.add('docked');
-            wrap.style.display = 'contents'; // inline 強迫,避免被其他樣式蓋掉 → 兩按鈕各自佔一列
+            wrap.style.display = 'contents'; // 容器消失 → 兩按鈕各自佔工具列一列(各佔一行)
+            var lbls = wrap.querySelectorAll('.lbl');
+            for (var i = 0; i < lbls.length; i++) lbls[i].style.fontSize = '10px'; // 免被工具列 .lbl 小字體規則影響
+            admin.querySelectorAll('button').forEach(function (b) { if (b.style.fontSize) b.style.fontSize = ''; });
             tk.appendChild(wrap); return true;
           }
           if (!wrap.parentElement || wrap.parentElement === document.body) document.body.appendChild(wrap);
@@ -628,8 +635,8 @@
             var foot = document.createElement('div');
             foot.style.cssText = 'padding:8px 14px;text-align:right;border-top:1px solid #eee';
             foot.innerHTML =
-              '<button id="ob-src-admin-dl" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">匯出 xlsx(備份)</button>' +
-              '<button id="ob-src-admin-clear" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">全部清除</button>';
+              '<button id="ob-src-admin-dl" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">匯出 xlsx(備份)</button>' +
+              '<button id="ob-src-admin-clear" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">全部清除</button>';
             admin.appendChild(foot);
           }
           admin.style.display = 'block';
