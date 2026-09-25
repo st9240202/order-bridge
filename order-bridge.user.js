@@ -850,6 +850,7 @@
         '<div id="ob-status">尚未讀取資料</div>' +
         '<div><label><input type="checkbox" data-ob="edit-empty" checked> 已無品名 → 補品名</label>' +
         '<label style="margin-left:12px"><input type="checkbox" data-ob="edit-fill"> 已有品名 → 覆寫更新</label></div>' +
+        '<div style="margin-top:6px"><label><input type="checkbox" data-ob="auto-refresh" checked> 提交完成後自動重新整理頁面</label></div>' +
         '<table id="ob-table" style="display:none"><thead><tr>' +
         '<th style="width:30px"><input type="checkbox" id="ob-check-all" checked></th>' +
         '<th class="c-bill">單號</th><th>物流公司</th><th class="c-goods">品名(goods,≤60字)</th><th>處理方式</th><th>結果</th>' +
@@ -1062,9 +1063,16 @@
         }
         function done() {
           $('[data-ob="submit"]').disabled = false;
+          var ar = $('[data-ob="auto-refresh"]');
+          var willRefresh = ar && ar.checked;
           resultDiv.innerHTML = '<div class="' + (failN ? 'ob-err' : 'ob-ok') + '">' +
-            (failN ? '⚠ 完成:成功 ' + okN + ' / 失敗 ' + failN : '✅ 全部成功(' + okN + ' 筆)。可到「查看到貨情況」核對。') + '</div>';
-          OB.utils.notify('導入完成:成功 ' + okN + ',失敗 ' + failN);
+            (failN ? '⚠ 完成:成功 ' + okN + ' / 失敗 ' + failN : '✅ 全部成功(' + okN + ' 筆)。可到「查看到貨情況」核對。') +
+            (willRefresh ? ' <span style="color:#999">(3 秒後自動重新整理…)</span>' : '') + '</div>';
+          OB.utils.notify('導入完成:成功 ' + okN + ',失敗 ' + failN + (willRefresh ? ',3 秒後重新整理' : ''));
+          if (willRefresh) {
+            try { sessionStorage.setItem('__OB_REOPEN', '1'); } catch (e) { }
+            setTimeout(function () { location.reload(); }, 3000);
+          }
         }
         var pend = newJobs.length + editJobs.length;
         if (!pend) { done(); return; }
@@ -1148,6 +1156,16 @@
       return;
     }
     var site = pickSite();
-    if (site) OB.UI.install(site);
+    if (site) {
+      OB.UI.install(site);
+      // 重新整理後自動重新打開導入面板(提交完觸發的 reload)
+      try {
+        if (sessionStorage.getItem('__OB_REOPEN')) {
+          sessionStorage.removeItem('__OB_REOPEN');
+          var f = document.getElementById('ob-fab');
+          if (f) setTimeout(function () { f.click(); }, 600);
+        }
+      } catch (e) { }
+    }
   })();
 })();
