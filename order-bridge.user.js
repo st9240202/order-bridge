@@ -5,6 +5,9 @@
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
+// @homepage     https://github.com/st9240202/order-bridge
+// @source       https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
+// @downloadURL  https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_notify
