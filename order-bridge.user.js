@@ -447,8 +447,8 @@
           '#ob-src-fab{background:#ff5000}#ob-src-fab:hover{background:#ff6a26}#ob-src-fab:disabled{background:#bbb;cursor:default}',
           '#ob-src-mgr{background:#555}#ob-src-mgr:hover{background:#777}',
           /* 融入淘寶右側工具列(#tb-toolkit-new):48x48 透明磁磚,icon+label 垂直 */
-          '#ob-src-fabs.docked{position:static;right:auto;bottom:auto;gap:8px;z-index:auto}',
-          '#ob-src-fabs.docked button{width:48px;height:48px;border-radius:10px;padding:2px;flex-direction:column;gap:1px;box-shadow:none;color:#333;background:transparent;font-size:10px}',
+          '#ob-src-fabs.docked{position:static;right:auto;bottom:auto;gap:8px;z-index:auto;display:contents}',
+          '#ob-src-fabs.docked button{width:48px;height:48px;border-radius:10px;padding:2px;margin:8px 0 0;flex-direction:column;gap:1px;box-shadow:none;color:#333;background:transparent;font-size:10px}',
           '#ob-src-fabs.docked button .ico{font-size:18px;line-height:1.3}',
           '#ob-src-fabs.docked button .lbl{font-size:10px;line-height:1.2;white-space:nowrap}',
           '#ob-src-fabs.docked #ob-src-fab{background:#fff3ec;color:#ff5000}#ob-src-fabs.docked #ob-src-fab:hover{background:#ffe8d9}',
