@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.6
+// @version      3.2.7
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
@@ -443,9 +443,16 @@
         var st = document.createElement('style');
         st.textContent = [
           '#ob-src-fabs{position:fixed;right:24px;bottom:140px;z-index:99999;display:flex;gap:8px}',
-          '#ob-src-fabs button{border:none;border-radius:24px;padding:12px 16px;font-size:14px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3);font-family:inherit;color:#fff}',
+          '#ob-src-fabs button{border:none;border-radius:24px;padding:12px 16px;font-size:14px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3);font-family:inherit;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px}',
           '#ob-src-fab{background:#ff5000}#ob-src-fab:hover{background:#ff6a26}#ob-src-fab:disabled{background:#bbb;cursor:default}',
           '#ob-src-mgr{background:#555}#ob-src-mgr:hover{background:#777}',
+          /* 融入淘寶右側工具列(#tb-toolkit-new):48x48 透明磁磚,icon+label 垂直 */
+          '#ob-src-fabs.docked{position:static;right:auto;bottom:auto;gap:8px;z-index:auto}',
+          '#ob-src-fabs.docked button{width:48px;height:48px;border-radius:10px;padding:2px;flex-direction:column;gap:1px;box-shadow:none;color:#333;background:transparent;font-size:10px}',
+          '#ob-src-fabs.docked button .ico{font-size:18px;line-height:1.3}',
+          '#ob-src-fabs.docked button .lbl{font-size:10px;line-height:1.2;white-space:nowrap}',
+          '#ob-src-fabs.docked #ob-src-fab{background:#fff3ec;color:#ff5000}#ob-src-fabs.docked #ob-src-fab:hover{background:#ffe8d9}',
+          '#ob-src-fabs.docked #ob-src-mgr:hover{background:#f2f2f2}',
           '#ob-src-admin{position:fixed;right:24px;bottom:196px;z-index:99999;background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.3);width:430px;max-height:60vh;display:none;font-family:inherit;overflow:auto;text-align:left}',
           '#ob-src-admin h4{margin:0;padding:10px 14px;border-bottom:1px solid #eee;font-size:14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff}',
           '.ob-rec{padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:12px}',
@@ -469,7 +476,8 @@
           '#ob-src-confirm .cfoot{padding:10px 16px;border-top:1px solid #eee;text-align:right;display:flex;gap:8px;justify-content:flex-end;align-items:center}',
           '#ob-src-confirm .cfoot label{margin-right:auto;font-size:12px;color:#666;cursor:pointer}',
           '#ob-src-confirm button{padding:7px 16px;border:1px solid #d9d9d9;border-radius:5px;background:#fff;cursor:pointer;font-size:13px}',
-          '#ob-src-confirm .c-ok{background:#1890ff;color:#fff;border-color:#1890ff}'
+          '#ob-src-confirm .c-ok{background:#1890ff;color:#fff;border-color:#1890ff}',
+          '#ob-src-admin.docked{right:88px;top:50%;transform:translateY(-50%);bottom:auto}'
         ].join('');
         document.head.appendChild(st);
 
@@ -525,19 +533,25 @@
         wrap.id = 'ob-src-fabs';
         var fab = document.createElement('button');
         fab.id = 'ob-src-fab';
-        fab.textContent = '📦 導出並暫存';
+        fab.innerHTML = '<span class="ico">📦</span><span class="lbl">導出</span>';
         var mgrBtn = document.createElement('button');
         mgrBtn.id = 'ob-src-mgr';
-        mgrBtn.textContent = '🗂 暫存';
+        mgrBtn.innerHTML = '<span class="ico">🗂</span><span class="lbl">暫存</span>';
         wrap.appendChild(fab);
         wrap.appendChild(mgrBtn);
-        document.body.appendChild(wrap);
+        function setLbl(b, t) { var l = b.querySelector('.lbl'); if (l) l.textContent = t; else b.textContent = t; }
+        // 掛進淘寶右側工具列(#tb-toolkit-new);找不到就退回漂浮 FAB(在 admin 建立後呼叫)
+        function mount() {
+          var tk = document.querySelector('#tb-toolkit-new .tb-toolkit-list-new') || document.querySelector('#tb-toolkit-new');
+          if (tk) { wrap.classList.add('docked'); admin.classList.add('docked'); tk.appendChild(wrap); }
+          else document.body.appendChild(wrap);
+        }
 
         // 淘寶專屬:點 FAB 自動操作「導出訂單」流程(其他 Source 可換成自己的觸發邏輯)
         fab.onclick = function () {
           fab.disabled = true;
-          fab.textContent = '⏳ 導出中…';
-          function fail(msg) { fab.disabled = false; fab.textContent = '📦 導出並暫存'; api.notify('❌ ' + msg); }
+          setLbl(fab, '⏳');
+          function fail(msg) { fab.disabled = false; setLbl(fab, '導出'); api.notify('❌ ' + msg); }
           try {
             Array.prototype.slice.call(document.querySelectorAll('.ant-tooltip button, .ant-popover button, [class*=tooltip] button'))
               .forEach(function (b) { if (b.textContent.indexOf('知道了') > -1) b.click(); });
@@ -567,7 +581,7 @@
                 var w = 0;
                 var t2 = setInterval(function () {
                   w++;
-                  if (lastCap && lastCap.ts > Date.now() - 15000) { clearInterval(t2); fab.disabled = false; fab.textContent = '📦 導出並暫存'; }
+                  if (lastCap && lastCap.ts > Date.now() - 15000) { clearInterval(t2); fab.disabled = false; setLbl(fab, '導出'); }
                   else if (w >= 10) { clearInterval(t2); fail('未捕獲到下載檔案,請手動下載或改在管理選單匯入'); }
                 }, 1000);
               } else if (tries >= 20) { clearInterval(timer); fail('等待「下載訂單」超時'); }
@@ -616,7 +630,9 @@
         mgrBtn.onclick = function () {
           if (admin.style.display === 'block') { admin.style.display = 'none'; return; }
           OB.Bridge.getAll().then(renderAdmin);
-        };      }
+        };
+        mount();
+        }
     }
   };
   function pickSource() {
@@ -737,7 +753,13 @@
   }
 
   // ===================== OB.UI(輸出端面板/FAB/預覽/管理選單) =====================
+  // 自訂按鈕/外觀:每個 Site 可宣告 site.uiStyle(CSS 字串),會追加在預設樣式之後,
+  // 可覆寫 #ob-fab / #ob-fab-mgr / #ob-panel 等任何 id。例:
+  //   OB.Sites.example = { ..., uiStyle: "#ob-fab{background:#ff5000;bottom:40px}" }
+  // 或用 OB.UI.setStyle(css) 做全域覆寫(供其他腳本/進階使用者)。
   OB.UI = {
+    _extraStyle: '',
+    setStyle: function (css) { OB.UI._extraStyle = css || ''; return OB.UI._extraStyle; },
     install: function (site) {
       var MAX_ROWS_PER_SUBMIT = 10;
       var emptyState = function () { return { items: [], existing: {}, parsed: false }; };
@@ -779,7 +801,7 @@
         '#ob-admin .ob-rec button{padding:2px 10px;font-size:12px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:6px}'
       ].join('');
       var st = document.createElement('style');
-      st.textContent = STYLE;
+      st.textContent = STYLE + (site.uiStyle || '') + OB.UI._extraStyle;
       document.head.appendChild(st);
 
       var fab = document.createElement('button');
