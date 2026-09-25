@@ -477,11 +477,12 @@
           '#ob-src-confirm .cfoot label{margin-right:auto;font-size:12px;color:#666;cursor:pointer}',
           '#ob-src-confirm button{padding:7px 16px;border:1px solid #d9d9d9;border-radius:5px;background:#fff;cursor:pointer;font-size:13px}',
           '#ob-src-confirm .c-ok{background:#1890ff;color:#fff;border-color:#1890ff}',
-          '#ob-src-admin.docked{left:1560px;right:88px;top:12vh;bottom:auto;width:auto;min-width:420px;max-width:640px;max-height:80vh}',
+          '#ob-src-admin.docked{right:70px;left:auto;top:10vh;bottom:auto;width:580px;max-width:92vw;max-height:80vh}',
           '#ob-src-admin.docked *{font-size:13px}',
           '#ob-src-admin.docked button{font-size:13px;font-family:inherit;color:#333;padding:7px 18px;line-height:1.4}',
           '#ob-src-admin.docked .ob-prev{font-size:12px;max-height:46vh}',
-          '#ob-src-admin.docked .ob-prev td{padding:6px 8px}'
+          '#ob-src-admin.docked .ob-prev td{padding:6px 8px}',
+          '#ob-src-admin.docked button{font-size:13px!important;color:#333!important;font-family:inherit}'
         ].join('');
         document.head.appendChild(st);
 
