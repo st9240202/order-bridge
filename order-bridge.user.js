@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.5
+// @version      3.2.6
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
@@ -34,6 +34,7 @@
   //   並加一列 @match。站點適配器只認標準 Item,不需改。
   // =====================================================================
   var OB = window.__OB = window.__OB || {};
+  var xlsxLib = null; // SheetJS 快取(避免 window 污染 TM sandbox)
 
   // ===================== OB.utils =====================
   function $(sel, root) { return (root || document).querySelector(sel); }
