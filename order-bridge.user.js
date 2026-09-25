@@ -737,6 +737,7 @@
         '<div><label><input type="checkbox" data-ob="edit-empty" checked> 已無品名 → 補品名</label>' +
         '<label style="margin-left:12px"><input type="checkbox" data-ob="edit-fill"> 已有品名 → 覆寫更新</label></div>' +
         '<table id="ob-table" style="display:none"><thead><tr>' +
+        '<th style="width:30px"><input type="checkbox" id="ob-check-all" checked></th>' +
         '<th class="c-bill">單號</th><th>物流公司</th><th class="c-goods">品名(goods,≤60字)</th><th>處理方式</th><th>結果</th>' +
         '</tr></thead><tbody id="ob-tbody"></tbody></table>' +
         '<div id="ob-result"></div>' +
@@ -888,7 +889,9 @@
           else { badge = '<span class="ob-badge ' + (doEdit ? 'ob-b-edit' : 'ob-b-editnew') + '">' + (doEdit ? '更新品名' : '需勾選') + '</span>'; if (doEdit) count++; }
           var tr = document.createElement('tr');
           tr.setAttribute('data-idx', idx);
+          var checked = (row.action === 'new') ? 'checked' : (doEdit ? 'checked' : '');
           tr.innerHTML =
+            '<td><input type="checkbox" data-f="sel" ' + checked + '></td>' +
             '<td class="c-bill">' + esc(row.item.billcode) + '</td>' +
             '<td>' + esc(row.item.company || '') + '</td>' +
             '<td class="c-goods"><input data-f="goods" value="' + esc(row.item.goods) + '"></td>' +
@@ -901,8 +904,9 @@
         $('[data-ob="submit"]').disabled = !count;
         state.pending = rows;
         state.planCount = count;
+        $('#ob-check-all').checked = true;
         setStatus('📋 共 ' + rows.length + ' 個單號 → <b>' + nNew + '</b> 新預報 / <b>' + nEN + '</b> 需補品名 / <b>' + nEF + '</b> 可更新品名。' +
-          '本次將處理 <b>' + count + '</b> 筆。');
+          '勾選要處理的列(預設全選),再按「開始提交」。');
       }
 
       // ---------- 提交 ----------
@@ -917,6 +921,8 @@
         var jobs = [];
         state.pending.forEach(function (row, idx) {
           var tr = tbodyRows[idx];
+          var selChk = tr.querySelector('input[data-f="sel"]');
+          if (selChk && !selChk.checked) return; // 未勾選 → 跳過
           var goods = readGoodsFromRow(tr);
           if (!goods) goods = row.item.goods;
           var act = 'skip';
@@ -925,7 +931,7 @@
           else if (row.action === 'edit-fill' && doEditFill) act = 'edit';
           if (act !== 'skip') jobs.push({ act: act, row: row, tr: tr, goods: goods });
         });
-        if (!jobs.length) { setStatus('⚠ 沒有要處理的項'); return; }
+        if (!jobs.length) { setStatus('⚠ 沒有勾選任何要處理的項'); return; }
         $('[data-ob="submit"]').disabled = true;
         var resultDiv = $('#ob-result');
         resultDiv.innerHTML = '<div class="ob-ok">⏳ 提交中…</div>';
@@ -996,6 +1002,10 @@
       });
       $('[data-ob="edit-empty"]').addEventListener('change', function () { if (state.parsed) runAnalysis(); });
       $('[data-ob="edit-fill"]').addEventListener('change', function () { if (state.parsed) runAnalysis(); });
+      $('#ob-check-all').addEventListener('change', function () {
+        var all = this.checked;
+        $('#ob-tbody').querySelectorAll('input[data-f="sel"]').forEach(function (c) { c.checked = all; });
+      });
 
       fab.onclick = function () {
         panel.style.display = 'block';
