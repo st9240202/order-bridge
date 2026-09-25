@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.7
+// @version      3.2.8
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
@@ -540,12 +540,23 @@
         wrap.appendChild(fab);
         wrap.appendChild(mgrBtn);
         function setLbl(b, t) { var l = b.querySelector('.lbl'); if (l) l.textContent = t; else b.textContent = t; }
-        // 掛進淘寶右側工具列(#tb-toolkit-new);找不到就退回漂浮 FAB(在 admin 建立後呼叫)
+        // 掛進淘寶右側工具列(#tb-toolkit-new);找不到就退回漂浮 FAB(在 admin 建立後呼叫)。
+        // 工具列可能晚於腳本執行才出現,用輪詢補掛(最多 ~20s)。
         function mount() {
+          if (!admin) { if (!wrap.parentElement || wrap.parentElement === document.body) document.body.appendChild(wrap); return false; }
           var tk = document.querySelector('#tb-toolkit-new .tb-toolkit-list-new') || document.querySelector('#tb-toolkit-new');
-          if (tk) { wrap.classList.add('docked'); admin.classList.add('docked'); tk.appendChild(wrap); }
-          else document.body.appendChild(wrap);
+          if (tk) { wrap.classList.add('docked'); admin.classList.add('docked'); tk.appendChild(wrap); return true; }
+          if (!wrap.parentElement || wrap.parentElement === document.body) document.body.appendChild(wrap);
+          return false;
         }
+        mount();
+        var mTry = 0;
+        var mTimer = setInterval(function () {
+          mTry++;
+          if (wrap.parentElement !== document.body) { clearInterval(mTimer); return; } // 已掛進工具列
+          if (mount()) { clearInterval(mTimer); return; }
+          if (mTry >= 20) clearInterval(mTimer); // 20s 後放棄,維持漂浮模式
+        }, 1000);
 
         // 淘寶專屬:點 FAB 自動操作「導出訂單」流程(其他 Source 可換成自己的觸發邏輯)
         fab.onclick = function () {
