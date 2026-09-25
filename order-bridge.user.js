@@ -1,15 +1,18 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.14
+// @version      3.2.15
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
+// @match        *://*/*
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
 // @homepage     https://github.com/st9240202/order-bridge
 // @source       https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
 // @downloadURL  https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_registerMenuCommandClose
 // @grant        GM_notify
 // @run-at       document-idle
 // ==/UserScript==
@@ -783,6 +786,90 @@
   OB.UI = {
     _extraStyle: '',
     setStyle: function (css) { OB.UI._extraStyle = css || ''; return OB.UI._extraStyle; },
+
+    // ---------- 檢視模式:非來源/非目標網頁也能從 TM 選單看暫存清單 ----------
+    installViewer: function () {
+      var VIEWER_CSS =
+        '#obv-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99997;display:none}' +
+        '#obv{position:fixed;left:50%;top:5vh;transform:translateX(-50%);width:min(92vw,900px);max-height:90vh;overflow:auto;background:#fff;z-index:99998;box-shadow:0 10px 40px rgba(0,0,0,.35);padding:16px 20px;box-sizing:border-box;border-radius:10px;font-family:inherit;font-size:13px;text-align:left}' +
+        '#obv h3{margin:0 0 10px;font-size:16px;display:flex;justify-content:space-between;align-items:center}' +
+        '#obv .x{cursor:pointer;font-size:20px;color:#999}' +
+        '#obv .meta{color:#999;font-size:12px;margin:4px 0}' +
+        '#obv table{width:100%;border-collapse:collapse;font-size:12px}' +
+        '#obv td{padding:4px 8px;border-top:1px solid #f0f0f0;vertical-align:top}' +
+        '#obv td.c-bill{white-space:nowrap;color:#555;font-family:monospace}' +
+        '#obv .btns{margin-top:10px;text-align:right}' +
+        '#obv .btns button{padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;margin-left:8px}' +
+        '#obv .btns .danger{color:#cf1322;border-color:#ffa39e}';
+
+      function ensureDom() {
+        if (document.getElementById('obv')) return document.getElementById('obv');
+        var st = document.createElement('style');
+        st.textContent = VIEWER_CSS + (OB.UI._extraStyle || '');
+        document.head.appendChild(st);
+        var mask = document.createElement('div'); mask.id = 'obv-mask';
+        var box = document.createElement('div'); box.id = 'obv';
+        mask.onclick = function () { mask.style.display = 'none'; box.style.display = 'none'; };
+        document.body.appendChild(mask); document.body.appendChild(box);
+        return box;
+      }
+
+      function close() { var b = document.getElementById('obv'); if (b) b.style.display = 'none'; var m = document.getElementById('obv-mask'); if (m) m.style.display = 'none'; }
+      function open() {
+        var box = ensureDom();
+        document.getElementById('obv-mask').style.display = 'block';
+        box.innerHTML = '<h3><span>📋 Order Bridge 暫存清單</span><span class="x" data-x>✕</span></h3><div class="meta">載入中…</div>';
+        box.style.display = 'block';
+        box.querySelector('[data-x]').onclick = close;
+
+        OB.Bridge.getAll().then(function (st) {
+          st = st || { records: [] };
+          var recs = st.records || [];
+          var html = '<h3><span>📋 Order Bridge 暫存清單</span><span class="x">✕</span></h3>';
+          if (!recs.length) {
+            html += '<div class="meta">目前沒有暫存資料。請先在淘寶 buyertrade 訂單頁用本工具導出。</div>';
+            box.innerHTML = html;
+            box.querySelector('[data-x]').onclick = close; return;
+          }
+          recs.forEach(function (r) {
+            html += '<div style="margin-bottom:14px">' +
+              '<div class="meta"><b>' + OB.utils.esc(r.name || r.id) + (st.activeId === r.id ? ' <span style="color:#1890ff">(目前導入用)</span>' : '') + ' · 來源:' + OB.utils.esc(r.source || '?') +
+              ' · ' + OB.utils.fmtTs(r.ts) + (r.items ? ' · ' + r.items.length + ' 個單號' : '') + '</div>' +
+              (r.items && r.items.length ? '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : '<div class="meta">(無項目)</div>') +
+              '</div>';
+          });
+          html += '<div class="btns">' +
+            '<button id="obv-export">匯出 xlsx(備份)</button>' +
+            '<button id="obv-clear" class="danger">全部清除</button></div>';
+          box.innerHTML = html;
+          box.querySelector('[data-x]').onclick = close;
+          var active = null;
+          if (st.activeId) active = recs.find(function (r) { return r.id === st.activeId; });
+          if (!active && recs.length) active = recs[0];
+          document.getElementById('obv-export').onclick = function () { if (active) OB.utils.downloadRecord(active); };
+          document.getElementById('obv-clear').onclick = function () {
+            if (!confirm('確定清除所有暫存資料?')) return;
+            OB.Bridge.clear().then(function () { open(); });
+          };
+        }).catch(function (e) {
+          box.innerHTML = '<h3><span>📋 Order Bridge 暫存清單</span><span class="x" data-x>✕</span></h3><div class="meta" style="color:#cf1322">讀取失敗:' + OB.utils.esc(e.message) + '</div>';
+          box.querySelector('[data-x]').onclick = close;
+        });
+      }
+
+      if (typeof GM_registerMenuCommand === 'function') {
+        var cmd = GM_registerMenuCommand('📋 檢視 Order Bridge 暫存清單', function () { open(); });
+        if (typeof GM_registerMenuCommandClose === 'function' && cmd) {
+          GM_registerMenuCommandClose(cmd, close);
+        }
+      }
+      // 備用快捷鍵:Ctrl+Shift+B 開啟檢視 modal(方便在任意網頁快速查看)
+      document.addEventListener('keydown', function (e) {
+        if (e && e.ctrlKey && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
+          e.preventDefault(); e.stopPropagation(); open();
+        }
+      }, true);
+    },
     install: function (site) {
       var MAX_ROWS_PER_SUBMIT = 10;
       var emptyState = function () { return { items: [], existing: {}, parsed: false }; };
@@ -1183,6 +1270,8 @@
           if (f) setTimeout(function () { f.click(); }, 600);
         }
       } catch (e) { }
+    } else {
+      OB.UI.installViewer();
     }
   })();
 })();
