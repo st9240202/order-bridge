@@ -790,9 +790,13 @@
       var store = null; // 暫存記錄快取
 
       var STYLE = [
-        '#ob-fab{position:fixed;right:24px;bottom:120px;z-index:99999;border:none;border-radius:50%;width:60px;height:60px;background:#1890ff;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(24,144,255,.4);transition:transform .15s}',
-        '#ob-fab:hover{transform:scale(1.08)}',
-        '#ob-fab-mgr{position:fixed;right:24px;bottom:196px;z-index:99999;border:none;border-radius:50%;width:44px;height:44px;background:#595959;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.3)}',
+        '#ob-fab-dock{position:fixed;right:22px;bottom:110px;z-index:99999;display:flex;flex-direction:column;gap:6px;padding:8px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border:1px solid rgba(0,0,0,.06);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.16)}',
+        '#ob-fab,#ob-fab-mgr{position:static;align-self:center;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:transparent;cursor:pointer;padding:8px 10px;border-radius:12px;font-family:inherit;line-height:1.1;transition:background .15s}',
+        '#ob-fab .ob-fico,#ob-fab-mgr .ob-fico{font-size:24px;line-height:1}',
+        '#ob-fab .ob-flbl,#ob-fab-mgr .ob-flbl{font-size:11px;font-weight:600}',
+        '#ob-fab{color:#1890ff}#ob-fab:hover{background:#e6f4ff}',
+        '#ob-fab-mgr{color:#737373}#ob-fab-mgr:hover{background:#f5f5f5}',
+        '@media (max-width:768px){#ob-fab-dock{padding:6px;gap:2px}#ob-fab,#ob-fab-mgr{padding:6px 8px}#ob-fab .ob-fico,#ob-fab-mgr .ob-fico{font-size:20px}#ob-fab .ob-flbl,#ob-fab-mgr .ob-flbl{font-size:10px}}',
         '#ob-panel-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99997;display:none}',
         '#ob-panel{position:fixed;left:50%;top:4vh;transform:translateX(-50%);width:min(96vw,1280px);max-height:92vh;overflow:auto;background:#fff;z-index:99998;box-shadow:0 10px 40px rgba(0,0,0,.35);padding:18px 22px;box-sizing:border-box;border-radius:10px}',
         '#ob-panel h3{margin:0 0 12px;font-size:17px}',
@@ -828,16 +832,19 @@
       st.textContent = STYLE + (site.uiStyle || '') + OB.UI._extraStyle;
       document.head.appendChild(st);
 
+      var fabDock = document.createElement('div');
+      fabDock.id = 'ob-fab-dock';
       var fab = document.createElement('button');
       fab.id = 'ob-fab';
       fab.title = '導入訂單 → ' + site.name;
-      fab.textContent = '📦';
+      fab.innerHTML = '<span class="ob-fico">📦</span><span class="ob-flbl">導入</span>';
       var fabMgr = document.createElement('button');
       fabMgr.id = 'ob-fab-mgr';
       fabMgr.title = '暫存管理';
-      fabMgr.textContent = '🗂';
-      document.body.appendChild(fab);
-      document.body.appendChild(fabMgr);
+      fabMgr.innerHTML = '<span class="ob-fico">🗂</span><span class="ob-flbl">暫存</span>';
+      fabDock.appendChild(fab);
+      fabDock.appendChild(fabMgr);
+      document.body.appendChild(fabDock);
 
       // ---------- 預覽面板(中央 modal) ----------
       var panelMask = document.createElement('div');
