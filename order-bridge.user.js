@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         訂單跨站導入橋 (Order Bridge)
 // @namespace    https://tampermonkey.net/
-// @version      3.2.15
+// @version      3.2.16
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -825,7 +825,7 @@
         OB.Bridge.getAll().then(function (st) {
           st = st || { records: [] };
           var recs = st.records || [];
-          var html = '<h3><span>📋 Order Bridge 暫存清單</span><span class="x">✕</span></h3>';
+          var html = '<h3><span>📋 Order Bridge 暫存清單</span><span class="x" data-x>✕</span></h3>';
           if (!recs.length) {
             html += '<div class="meta">目前沒有暫存資料。請先在淘寶 buyertrade 訂單頁用本工具導出。</div>';
             box.innerHTML = html;
