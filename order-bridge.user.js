@@ -1533,7 +1533,7 @@
       OB.UI.openViewer = open; // 供來源/站點 FAB 共用同一視窗
       var _openT = null;
       function open() {
-                if (_openT) { clearTimeout(_openT); _openT = null; }
+        if (_openT) { clearTimeout(_openT); _openT = null; }
         var box = ensureDom();
         // SPA 頁面(如 GitHub)可能把注入節點從 body 移除 → 重新掛回
         [box, maskRef, pmRef, pmRef && pmRef.__pmask, pmRef && pmRef.__toast].forEach(function (el) {
