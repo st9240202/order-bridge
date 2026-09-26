@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.20.1
+// @version      3.2.21
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -61,7 +61,7 @@
         'src.parseFail': '⚠ 解析失敗({f}:{m}),未存入',
         'src.noItems': '⚠ 未解析到任何單號({f},{e}),未存入',
         'src.cancel': '⚪ 已取消,未存入',
-        'src.saved': '✅ 已暫存({a} 個新單號{d},來源:{s})',
+        'src.saved': '✅ 已暫存({a} 個新單號{d})',
         'src.savedDup': ',{d} 個已存在(略過)',
         'src.saveFail': '❌ 暫存失敗:{m}',
         'src.saveFailFile': '❌ 暫存失敗({f}:{m})',
@@ -120,7 +120,7 @@
         'ui.readingOld': '⏳ 解析舊版暫存(原始檔)…',
         'ui.oldParseFail': '舊版暫存解析失敗:{m}',
         'ui.noDataInRec': '暫存記錄無資料',
-        'ui.readOk': '✅ 已讀取「{f}」({s},解析出 <b>{n}</b> 個單號{e})',
+        'ui.readOk': '✅ 已讀取「{f}」(解析出 <b>{n}</b> 個單號{e})',
         'ui.readErrs': '<br><span class="ob-err">⚠ {e}</span>',
         'ui.fileParsing': '⏳ 解析 {f}…',
         'ui.fileOk': '✅ {f} → <b>{n}</b> 個單號{e}',
@@ -148,7 +148,7 @@
         'vw.copyJson': '複製 JSON(勾選)',
         'vw.pasteJson': '貼上 JSON 匯入',
         'vw.jsonPrompt': '貼上對方傳來的 JSON 清單(會合併進暫存區):',
-        'vw.jsonOk': '已匯入 {n} 個單號(來源:{s})',
+        'vw.jsonOk': '已匯入 {n} 個單號',
         'vw.jsonFail': 'JSON 解析失敗:{m}',
         'vw.jsonEmpty': 'JSON 內沒有項目',
         'vw.jsonDup': '重複 {n} 個已略過',
@@ -160,6 +160,54 @@
         'vw.importBtn': '匯入',
         'vw.cancelBtn2': '取消',
         'vw.pasteDone': '✅ {m}',
+        'vw.cBill': 'Tracking #',
+        'vw.cGoods': 'Item name',
+        'vw.cComp': 'Courier',
+        'vw.colAct': 'Actions',
+        'vw.delItem': 'Delete',
+        'vw.delItemAsk': 'Delete item {b}?',
+        'vw.addItem': '+ Add tracking #',
+        'vw.delRec': 'Delete record',
+        'vw.delRecAsk': 'Delete this record and all its items?',
+        'vw.newRec': '+ New record',
+        'vw.fSource': 'Source key',
+        'vw.fName': 'Name',
+        'vw.fBill': 'First tracking # (optional)',
+        'vw.fGoods': 'First item name (optional)',
+        'vw.saved': 'Saved',
+        'vw.ok': 'OK',
+        'vw.cBill': '单号',
+        'vw.cGoods': '商品名称',
+        'vw.cComp': '快递',
+        'vw.colAct': '操作',
+        'vw.delItem': '删除',
+        'vw.delItemAsk': '删除该项目 {b}?',
+        'vw.addItem': '+ 加单号',
+        'vw.delRec': '删记录',
+        'vw.delRecAsk': '删除该记录及其全部項目?',
+        'vw.newRec': '+ 新記錄',
+        'vw.fSource': '来源标识 (source)',
+        'vw.fName': '名称',
+        'vw.fBill': '第一个单号(可空)',
+        'vw.fGoods': '第一个商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '确定',
+        'vw.cBill': '單號',
+        'vw.cGoods': '商品名稱',
+        'vw.cComp': '快遞',
+        'vw.colAct': '操作',
+        'vw.delItem': '刪除',
+        'vw.delItemAsk': '刪除此項目 {b}?',
+        'vw.addItem': '+ 加單號',
+        'vw.delRec': '刪記錄',
+        'vw.delRecAsk': '刪除這筆記錄及其全部項目?',
+        'vw.newRec': '+ 新增記錄',
+        'vw.fSource': '來源標識 (source)',
+        'vw.fName': '名稱',
+        'vw.fBill': '第一個單號(可空)',
+        'vw.fGoods': '第一個商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '確定',
         'ui.langLabel': '語言',
         'site.fail': '失敗',
         'site.badResp': '回應異常',
@@ -180,7 +228,7 @@
         'src.parseFail': '⚠ 解析失败({f}:{m}),未存入',
         'src.noItems': '⚠ 未解析到任何单号({f},{e}),未存入',
         'src.cancel': '⚪ 已取消,未存入',
-        'src.saved': '✅ 已暂存({a} 个新单号{d},来源:{s})',
+        'src.saved': '✅ 已暂存({a} 个新单号{d})',
         'src.savedDup': ',{d} 个已存在(略过)',
         'src.saveFail': '❌ 暂存失败:{m}',
         'src.saveFailFile': '❌ 暂存失败({f}:{m})',
@@ -239,7 +287,7 @@
         'ui.readingOld': '⏳ 解析旧版暂存(原始文件)…',
         'ui.oldParseFail': '旧版暂存解析失败:{m}',
         'ui.noDataInRec': '暂存记录无数据',
-        'ui.readOk': '✅ 已读取“{f}”({s},解析出 <b>{n}</b> 个单号{e})',
+        'ui.readOk': '✅ 已读取“{f}”(解析出 <b>{n}</b> 个单号{e})',
         'ui.readErrs': '<br><span class="ob-err">⚠ {e}</span>',
         'ui.fileParsing': '⏳ 解析 {f}…',
         'ui.fileOk': '✅ {f} → <b>{n}</b> 个单号{e}',
@@ -267,7 +315,7 @@
         'vw.copyJson': '复制 JSON(勾选)',
         'vw.pasteJson': '粘贴 JSON 导入',
         'vw.jsonPrompt': '粘贴对方传来的 JSON 清单(会合并进暂存区):',
-        'vw.jsonOk': '已导入 {n} 个单号(来源:{s})',
+        'vw.jsonOk': '已导入 {n} 个单号',
         'vw.jsonFail': 'JSON 解析失败:{m}',
         'vw.jsonEmpty': 'JSON 内没有项目',
         'vw.jsonDup': '重复 {n} 个已略过',
@@ -279,6 +327,54 @@
         'vw.importBtn': '导入',
         'vw.cancelBtn2': '取消',
         'vw.pasteDone': '✅ {m}',
+        'vw.cBill': 'Tracking #',
+        'vw.cGoods': 'Item name',
+        'vw.cComp': 'Courier',
+        'vw.colAct': 'Actions',
+        'vw.delItem': 'Delete',
+        'vw.delItemAsk': 'Delete item {b}?',
+        'vw.addItem': '+ Add tracking #',
+        'vw.delRec': 'Delete record',
+        'vw.delRecAsk': 'Delete this record and all its items?',
+        'vw.newRec': '+ New record',
+        'vw.fSource': 'Source key',
+        'vw.fName': 'Name',
+        'vw.fBill': 'First tracking # (optional)',
+        'vw.fGoods': 'First item name (optional)',
+        'vw.saved': 'Saved',
+        'vw.ok': 'OK',
+        'vw.cBill': '单号',
+        'vw.cGoods': '商品名称',
+        'vw.cComp': '快递',
+        'vw.colAct': '操作',
+        'vw.delItem': '删除',
+        'vw.delItemAsk': '删除该项目 {b}?',
+        'vw.addItem': '+ 加单号',
+        'vw.delRec': '删记录',
+        'vw.delRecAsk': '删除该记录及其全部項目?',
+        'vw.newRec': '+ 新記錄',
+        'vw.fSource': '来源标识 (source)',
+        'vw.fName': '名称',
+        'vw.fBill': '第一个单号(可空)',
+        'vw.fGoods': '第一个商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '确定',
+        'vw.cBill': '單號',
+        'vw.cGoods': '商品名稱',
+        'vw.cComp': '快遞',
+        'vw.colAct': '操作',
+        'vw.delItem': '刪除',
+        'vw.delItemAsk': '刪除此項目 {b}?',
+        'vw.addItem': '+ 加單號',
+        'vw.delRec': '刪記錄',
+        'vw.delRecAsk': '刪除這筆記錄及其全部項目?',
+        'vw.newRec': '+ 新增記錄',
+        'vw.fSource': '來源標識 (source)',
+        'vw.fName': '名稱',
+        'vw.fBill': '第一個單號(可空)',
+        'vw.fGoods': '第一個商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '確定',
         'ui.langLabel': '语言',
         'site.fail': '失败',
         'site.badResp': '响应异常',
@@ -299,7 +395,7 @@
         'src.parseFail': '⚠ Parse failed ({f}: {m}) — not stored',
         'src.noItems': '⚠ No tracking numbers parsed ({f}, {e}) — not stored',
         'src.cancel': '⚪ Cancelled — not stored',
-        'src.saved': '✅ Staged ({a} new tracking no.{d}, source: {s})',
+        'src.saved': '✅ Staged ({a} new tracking no.{d})',
         'src.savedDup': ', {d} already existed (skipped)',
         'src.saveFail': '❌ Stage failed: {m}',
         'src.saveFailFile': '❌ Stage failed ({f}: {m})',
@@ -358,7 +454,7 @@
         'ui.readingOld': '⏳ Parsing legacy staged file…',
         'ui.oldParseFail': 'Legacy staged file failed to parse: {m}',
         'ui.noDataInRec': 'Staged record has no data',
-        'ui.readOk': '✅ Loaded “{f}” ({s}, <b>{n}</b> tracking no.{e})',
+        'ui.readOk': '✅ Loaded “{f}” (<b>{n}</b> tracking no.{e})',
         'ui.readErrs': '<br><span class="ob-err">⚠ {e}</span>',
         'ui.fileParsing': '⏳ Parsing {f}…',
         'ui.fileOk': '✅ {f} → <b>{n}</b> tracking no.{e}',
@@ -386,7 +482,7 @@
         'vw.copyJson': 'Copy JSON (selected)',
         'vw.pasteJson': 'Paste JSON to import',
         'vw.jsonPrompt': 'Paste the JSON list you received (merged into staging):',
-        'vw.jsonOk': 'Imported {n} items (source: {s})',
+        'vw.jsonOk': 'Imported {n} items',
         'vw.jsonFail': 'JSON parse failed: {m}',
         'vw.jsonEmpty': 'No items in JSON',
         'vw.jsonDup': '{n} duplicates skipped',
@@ -398,6 +494,54 @@
         'vw.importBtn': 'Import',
         'vw.cancelBtn2': 'Cancel',
         'vw.pasteDone': '✅ {m}',
+        'vw.cBill': 'Tracking #',
+        'vw.cGoods': 'Item name',
+        'vw.cComp': 'Courier',
+        'vw.colAct': 'Actions',
+        'vw.delItem': 'Delete',
+        'vw.delItemAsk': 'Delete item {b}?',
+        'vw.addItem': '+ Add tracking #',
+        'vw.delRec': 'Delete record',
+        'vw.delRecAsk': 'Delete this record and all its items?',
+        'vw.newRec': '+ New record',
+        'vw.fSource': 'Source key',
+        'vw.fName': 'Name',
+        'vw.fBill': 'First tracking # (optional)',
+        'vw.fGoods': 'First item name (optional)',
+        'vw.saved': 'Saved',
+        'vw.ok': 'OK',
+        'vw.cBill': '单号',
+        'vw.cGoods': '商品名称',
+        'vw.cComp': '快递',
+        'vw.colAct': '操作',
+        'vw.delItem': '删除',
+        'vw.delItemAsk': '删除该项目 {b}?',
+        'vw.addItem': '+ 加单号',
+        'vw.delRec': '删记录',
+        'vw.delRecAsk': '删除该记录及其全部項目?',
+        'vw.newRec': '+ 新記錄',
+        'vw.fSource': '来源标识 (source)',
+        'vw.fName': '名称',
+        'vw.fBill': '第一个单号(可空)',
+        'vw.fGoods': '第一个商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '确定',
+        'vw.cBill': '單號',
+        'vw.cGoods': '商品名稱',
+        'vw.cComp': '快遞',
+        'vw.colAct': '操作',
+        'vw.delItem': '刪除',
+        'vw.delItemAsk': '刪除此項目 {b}?',
+        'vw.addItem': '+ 加單號',
+        'vw.delRec': '刪記錄',
+        'vw.delRecAsk': '刪除這筆記錄及其全部項目?',
+        'vw.newRec': '+ 新增記錄',
+        'vw.fSource': '來源標識 (source)',
+        'vw.fName': '名稱',
+        'vw.fBill': '第一個單號(可空)',
+        'vw.fGoods': '第一個商品名(可空)',
+        'vw.saved': '已保存',
+        'vw.ok': '確定',
         'ui.langLabel': 'Language',
         'site.fail': 'Failed',
         'site.badResp': 'Bad response',
@@ -659,54 +803,81 @@
     if (!recs.length) return null;
     return { activeId: recs[0].id, records: recs };
   }
-  function storeGet() {
-    // 優先級: GM(跨站主通道) → localStorage(同站備援)
-    // TM 5.5 下 @grant chrome.storage.local 在 content world 不一定注入,故不使用
-    return new Promise(function (resolve) {
-      function fromGm() {
-        try {
-          if (typeof GM_getValue !== 'function') return ls();
-          var v = GM_getValue(STORE_KEY);
-          if (v && v.records && v.records.length) return resolve(v);
-          for (var j = 0; j < LEGACY_KEYS.length; j++) {
-            var m2 = migrateLegacy(GM_getValue(LEGACY_KEYS[j]));
-            if (m2) return resolve(m2);
-          }
-          if (v) return resolve(v); // 空 store 也視為存在(避免重複遷移)
-        } catch (e) { }
-        ls();
-      }
-      function ls() {
-        try {
-          var s = localStorage.getItem(STORE_KEY);
-          if (s) { var p = JSON.parse(s); if (p && p.records && p.records.length) return resolve(p); }
-          for (var k = 0; k < LEGACY_KEYS.length; k++) {
-            var sl = localStorage.getItem(LEGACY_KEYS[k]);
-            var m3 = sl ? migrateLegacy(JSON.parse(sl)) : null;
-            if (m3) return resolve(m3);
-          }
-          if (s) { var p2 = JSON.parse(s); if (p2 && p2.records) return resolve(p2); }
-        } catch (e) { }
-        resolve(null);
-      }
-      fromGm();
-    });
+  function asStore(v) {
+    // 容錯:值可能是字串(TM 5.5 可能回傳未反序列化的 "o{...}" 或普通 JSON 字串)
+    if (v && typeof v === 'object') return v.records ? v : null;
+    if (typeof v === 'string' && v) {
+      try {
+        var t = v.charAt(0) === 'o' ? v.slice(1) : v;
+        var p = JSON.parse(t);
+        if (p && p.records) return p;
+      } catch (e2) { }
+    }
+    return null;
   }
-  function storeSet(store) {
-    return new Promise(function (resolve) {
-      var done = false;
-      function fin() { if (!done) { done = true; resolve(); } }
-      try { if (typeof GM_setValue === 'function') GM_setValue(STORE_KEY, store); } catch (e) { }
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { }
-      // 清除 legacy keys(僅在新 store 確有資料時,避免空 store 誤刪舊資料)
-      if (store.records && store.records.length) {
-        for (var i = 0; i < LEGACY_KEYS.length; i++) {
-          try { if (typeof GM_setValue === 'function') GM_setValue(LEGACY_KEYS[i], null); } catch (e) { }
-          try { localStorage.removeItem(LEGACY_KEYS[i]); } catch (e) { }
+  function newestOf(a, b) {
+    function ts(x) {
+      if (!x) return 0;
+      var m = 0;
+      (x.records || []).forEach(function (r) { if ((r.ts || 0) > m) m = r.ts || 0; });
+      return m;
+    }
+    if (!a) return b; if (!b) return a;
+    return ts(b) > ts(a) ? b : a;
+  }
+
+  // 頁內記憶快取:TM 5.5 的 GM 讀取會滯後一輪,同頁操作一律以記憶為準;
+  // GM/LS 只負責跨頁/跨站同步
+  var _memCache = null, _memInit = false;
+  function loadMem() {
+    if (_memInit) return _memCache;
+    _memInit = true;
+    // 開頁時 GM 可能滯後一輪 → 同時讀 LS,取較新版(同站 LS 最新;跨站靠 GM)
+    var g = null, l = null;
+    try {
+      if (typeof GM_getValue === 'function') g = asStore(GM_getValue(STORE_KEY));
+    } catch (e) { }
+    if (!g) {
+      try {
+        if (typeof GM_getValue === 'function') {
+          for (var j = 0; j < LEGACY_KEYS.length; j++) {
+            g = migrateLegacy(GM_getValue(LEGACY_KEYS[j]));
+            if (g) break;
+          }
+        }
+      } catch (e) { }
+    }
+    try {
+      var s = localStorage.getItem(STORE_KEY);
+      if (s) l = asStore(s);
+      if (!l) {
+        for (var k = 0; k < LEGACY_KEYS.length; k++) {
+          var sl = localStorage.getItem(LEGACY_KEYS[k]);
+          if (sl) { l = migrateLegacy(JSON.parse(sl)); if (l) break; }
         }
       }
-      fin();
-    });
+    } catch (e) { }
+    var found = newestOf(g, l) || { activeId: '', records: [] };
+    found.records = prune(found.records || []);
+    _memCache = found;
+    return _memCache;
+  }
+  function storeGet() {
+    // 同頁:直接回記憶快取(含本頁已寫入的最新資料)
+    return Promise.resolve(loadMem());
+  }
+  function storeSet(store) {
+    store.records = prune(store.records || []);
+    _memCache = store; _memInit = true; // 本頁真相
+    try { if (typeof GM_setValue === 'function') GM_setValue(STORE_KEY, store); } catch (e) { }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { }
+    if (store.records && store.records.length) {
+      for (var i = 0; i < LEGACY_KEYS.length; i++) {
+        try { if (typeof GM_setValue === 'function') GM_setValue(LEGACY_KEYS[i], null); } catch (e) { }
+        try { localStorage.removeItem(LEGACY_KEYS[i]); } catch (e) { }
+      }
+    }
+    return Promise.resolve();
   }
   function prune(records) {
     var now = Date.now();
@@ -726,20 +897,42 @@
     return JSON.stringify(rec.items || []);
   }
   // bridge 100% 只存 items
+  // 強讀最新(GM / LS 重讀,兩者取較新版,並更新記憶快取);都拿不到 → 保留記憶
+  function freshGet() {
+    var g = null, l = null;
+    try {
+      if (typeof GM_getValue === 'function') g = asStore(GM_getValue(STORE_KEY));
+    } catch (e) { }
+    try {
+      var s = localStorage.getItem(STORE_KEY);
+      if (s) l = asStore(s);
+    } catch (e) { }
+    var found = newestOf(g, l);
+    if (found) {
+      found.records = prune(found.records || []);
+      _memCache = found; _memInit = true;
+      return Promise.resolve(found);
+    }
+    return Promise.resolve(loadMem());
+  }
+  function getAll(opts) {
+    return (opts && opts.fresh) ? freshGet() : storeGet();
+  }
   OB.Bridge = {
     STORE_KEY: STORE_KEY,
     MAX_AGE: MAX_AGE,
-    getAll: storeGet,
+    getAll: getAll,
     save: storeSet,
-    // 合併式存入:同一 source 永遠只有一筆記錄;新單號併入,重複單號忽略
+    freshGet: freshGet,
+    loadMem: loadMem,
+    // 合併式存入:永遠只有一筆記錄,以運單號為 key;新單號併入,重複單號忽略(不記錄來源)
     // → { store, added, dup, created }
     async merge(items, opts) {
       items = items || [];
       opts = opts || {};
-      var source = opts.source || location.hostname || 'unknown';
       var store = (await storeGet()) || { activeId: '', records: [] };
       store.records = prune(store.records || []);
-      var existing = store.records.find(function (r) { return r.source === source; }) || null;
+      var existing = store.records[0] || null;
       var added = 0, dup = 0;
       var map = {};
       if (existing && existing.items) {
@@ -752,7 +945,6 @@
         added++;
       });
       if (!added) {
-        // 無新單號:不碰 store(避免無意義 ts 更新)
         if (existing) store.activeId = existing.id;
         return { store: store, added: added, dup: dup, created: false };
       }
@@ -762,7 +954,7 @@
         if (opts.name) existing.name = opts.name;
         store.activeId = existing.id;
       } else {
-        var rec = { id: String(Date.now()), name: opts.name || 'orders', ts: Date.now(), source: source, items: Object.keys(map).map(function (k) { return map[k]; }) };
+        var rec = { id: String(Date.now()), name: opts.name || 'orders.xlsx', ts: Date.now(), items: Object.keys(map).map(function (k) { return map[k]; }) };
         store.records.unshift(rec);
         store.activeId = rec.id;
       }
@@ -770,9 +962,28 @@
       await storeSet(store);
       return { store: store, added: added, dup: dup, created: !existing };
     },
+    // 從暫存區移除指定運單號(導入完成後清理);移除後為空的記錄一併刪除
+    async removeItems(billList) {
+      var store = (await freshGet()) || { activeId: '', records: [] };
+      var set = {};
+      (billList || []).forEach(function (b) { set[b] = 1; });
+      var changed = false;
+      store.records = (store.records || []).map(function (r) {
+        if (!r.items) return r;
+        var ni = r.items.filter(function (it) { return it && !set[it.billcode]; });
+        if (ni.length !== r.items.length) { changed = true; r.items = ni; }
+        return r;
+      }).filter(function (r) { return r.items ? r.items.length > 0 : true; });
+      if (changed) {
+        if (!store.records.some(function (r) { return r.id === store.activeId; })) store.activeId = store.records[0] ? store.records[0].id : '';
+        await storeSet(store);
+      }
+      return store;
+    },
     async add(rec) {
-      var store = (await storeGet()) || { activeId: '', records: [] };
+      var store = (await freshGet()) || { activeId: '', records: [] };
       rec.id = rec.id || String(Date.now());
+      rec.ts = rec.ts || Date.now();
       rec.source = rec.source || location.hostname || 'unknown';
       store.records.unshift(rec);
       store.records = prune(store.records);
@@ -781,14 +992,14 @@
       return store;
     },
     async remove(id) {
-      var store = (await storeGet()) || { activeId: '', records: [] };
+      var store = (await freshGet()) || { activeId: '', records: [] };
       store.records = store.records.filter(function (r) { return r.id !== id; });
       if (store.activeId === id) store.activeId = store.records[0] ? store.records[0].id : '';
       await storeSet(store);
       return store;
     },
     async rename(id, name) {
-      var store = (await storeGet()) || { activeId: '', records: [] };
+      var store = (await freshGet()) || { activeId: '', records: [] };
       var r = store.records.find(function (x) { return x.id === id; });
       if (r) { r.name = name; await storeSet(store); }
       return store;
@@ -843,8 +1054,8 @@
             return new Promise(function (resolve) {
               showConfirm(res.items, res.errors, function (selItems) {
                 if (!selItems.length) { api.notify(t('src.cancel')); resolve(); return; }
-                OB.Bridge.merge(selItems, { source: base.source, name: name }).then(function (m) {
-                  var msg = t('src.saved', { a: m.added, d: m.dup ? t('src.savedDup', { d: m.dup }) : '', s: base.source });
+                OB.Bridge.merge(selItems, { name: name }).then(function (m) {
+                  var msg = t('src.saved', { a: m.added, d: m.dup ? t('src.savedDup', { d: m.dup }) : '' });
                   api.notify(msg);
                   resolve();
                 }).catch(function (e) { api.notify(t('src.saveFail', { m: e.message })); resolve(); });
@@ -1238,7 +1449,18 @@
         '#obv-pastebox .pfoot button{padding:6px 18px;border:1px solid #d9d9d9;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit}' +
         '#obv-pastebox .pfoot .pri{background:#1890ff;border-color:#1890ff;color:#fff}' +
         '#ob-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-8px);background:rgba(50,50,50,.92);color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;z-index:100001;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.2);font-family:system-ui,sans-serif;max-width:80vw}' +
-        '#ob-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}';
+        '#ob-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}' +
+        '#obv .obv-in{width:100%;box-sizing:border-box;border:1px solid transparent;background:transparent;padding:2px 5px;font-size:12px;font-family:inherit;border-radius:4px;color:#333}' +
+        '#obv .obv-in:hover{border-color:#e1e1e1;background:#fff}' +
+        '#obv .obv-in:focus{border-color:#1890ff;background:#fff;outline:none}' +
+        '#obv thead th{position:sticky;top:0;background:#fafafa;text-align:left;font-size:12px;padding:4px 8px;border-bottom:1px solid #eee;color:#666}' +
+        '#obv .obv-del,#obv .obv-mini{border:1px solid #d9d9d9;background:#fff;border-radius:4px;cursor:pointer;font-size:11px;padding:1px 8px}' +
+        '#obv .obv-del{color:#cf1322}#obv .obv-del:hover{background:#fff1f0}' +
+        '#obv .obv-mini{color:#1890ff}#obv .obv-mini:hover{background:#e6f4ff}' +
+        '#obv-pastebox .pmfields{padding:12px 16px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto}' +
+        '#obv-pastebox .pmfields label{font-size:12px;color:#666;display:flex;flex-direction:column;gap:4px}' +
+        '#obv-pastebox .pmfields input{padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;font-family:inherit;outline:none}' +
+        '#obv-pastebox .pmfields input:focus{border-color:#1890ff}';
 
       var _boxRef = null, pmRef = null, maskRef = null;
       function ensureDom() {
@@ -1299,11 +1521,9 @@
             .filter(function (it) { return it && typeof it.billcode === 'string'; })
             .map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; });
           if (!items.length) { toastMsg(t('vw.jsonEmpty')); return; }
-          var source = (data && !Array.isArray(data) && data.source) || 'shared';
-          var name = (data && !Array.isArray(data) && data.name) || 'shared-import';
-          OB.Bridge.merge(items, { source: source, name: name }).then(function (m) {
+          OB.Bridge.merge(items, {}).then(function (m) {
             closePaste();
-            toastMsg(t('vw.pasteDone', { m: t('vw.jsonOk', { n: m.added, s: source }) + (m.dup ? ' · ' + t('vw.jsonDup', { n: m.dup }) : '') }));
+            toastMsg(t('vw.pasteDone', { m: t('vw.jsonOk', { n: m.added }) + (m.dup ? ' · ' + t('vw.jsonDup', { n: m.dup }) : '') }));
             if (onDone) onDone();
           });
         };
@@ -1311,7 +1531,9 @@
 
       function close() { if (_boxRef) _boxRef.style.display = 'none'; if (maskRef) maskRef.style.display = 'none'; }
       OB.UI.openViewer = open; // 供來源/站點 FAB 共用同一視窗
+      var _openT = null;
       function open() {
+        if (_openT) { clearTimeout(_openT); _openT = null; }
         var box = ensureDom();
         // SPA 頁面(如 GitHub)可能把注入節點從 body 移除 → 重新掛回
         [box, maskRef, pmRef, pmRef && pmRef.__pmask, pmRef && pmRef.__toast].forEach(function (el) {
@@ -1323,17 +1545,24 @@
         box.querySelector('[data-x]').onclick = close;
         OB.i18n.bindLangSel(box);
 
+        _viewGen = (_viewGen || 0) + 1;
+        var gen = _viewGen;
         OB.Bridge.getAll().then(function (st) {
           st = st || { records: [] };
-          var recs = st.records || [];
+          var allRecs = st.records || [];
+          // 無單號的空記錄不顯示(store 保留,避免 GM 快取問題;匯出/複製時自動忽略)
+          var recs = allRecs.filter(function (r) { return r.items && r.items.length; });
+          _viewBox = box; _viewRecs = recs;
           var html = '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3>' + OB.i18n.langHtml();
           if (!recs.length) {
             html += '<div class="meta">' + t('vw.emptyNote') + '</div>' +
-              '<div class="btns"><button id="obv-paste">' + t('vw.pasteJson') + '</button></div>';
+              '<div class="btns"><button id="obv-paste">' + t('vw.pasteJson') + '</button><button id="obv-newrec">' + t('vw.newRec') + '</button></div>';
             OB.utils.setHTML(box, html);
             box.querySelector('[data-x]').onclick = close;
             OB.i18n.bindLangSel(box);
             bindPaste(box);
+            var nr = document.getElementById('obv-newrec');
+            if (nr) nr.onclick = function () { newRecModal(); };
             return;
           }
           var MAX = 50;
@@ -1342,22 +1571,23 @@
             var shown = items.slice(0, MAX);
             html += '<div class="obv-rec" data-r="' + ri + '" style="margin-bottom:14px">' +
               '<div class="meta"><label style="display:inline;margin-right:8px"><input type="checkbox" class="obv-all" data-r="' + ri + '"> ' + t('vw.selectAll') + '</label>' +
-              '<b>' + OB.utils.esc(r.name || r.id) + '</b>' + (st.activeId === r.id ? ' ' + t('vw.activeTag') : '') + ' · ' + t('src.source', { s: OB.utils.esc(r.source || '?') }) +
+              '<b>' + OB.utils.esc(r.name || r.id) + '</b>' + (st.activeId === r.id ? ' ' + t('vw.activeTag') : '') +
               ' · ' + OB.utils.fmtTs(r.ts) + ' ' + t('vw.nItems', { n: items.length }) +
-              ' <button class="obv-dl" data-r="' + ri + '" style="margin-left:8px;padding:1px 8px;font-size:11px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('vw.dlRec') + '</button></div>' +
-              (items.length ? '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' +
-                '<table>' + shown.map(function (it) {
-                  return '<tr><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode) + '"></td>' +
-                    '<td class="c-bill">' + OB.utils.esc(it.billcode) + '</td>' +
-                    '<td>' + OB.utils.esc(it.goods || '') + (it.company ? ' <span style="color:#999">(' + OB.utils.esc(it.company) + ')</span>' : '') + '</td></tr>';
-                }).join('') + '</table>' +
+              ' <button class="obv-dl" data-r="' + ri + '" style="margin-left:8px;padding:1px 8px;font-size:11px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('vw.dlRec') + '</button>' +
+              ' <button class="obv-mini obv-recdel" data-r="' + ri + '" style="margin-left:6px">' + t('vw.delRec') + '</button></div>' +
+              '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' +
+                '<table>' +
+                '<thead><tr><th style="width:26px"></th><th style="width:170px">' + t('vw.cBill') + '</th><th>' + t('vw.cGoods') + '</th><th style="width:150px">' + t('vw.cComp') + '</th><th style="width:170px">' + t('vw.colAct') + '</th></tr></thead>' +
+                shown.map(function (it, ii) { return addRowHtml(ri, ii, it); }).join('') + '</table>' +
                 (items.length > MAX ? '<div class="more" style="color:#999;font-size:12px;padding:4px 8px">…' + t('prev.more', { n: items.length - MAX }) + '(全選=全部 ' + items.length + ' 項)</div>' : '') +
-              '</div>' : '<div class="meta">' + t('vw.noItems') + '</div>') +
+                '<div style="padding:4px 8px"><button class="obv-mini obv-additem" data-r="' + ri + '">' + t('vw.addItem') + '</button></div>' +
+              '</div>' +
               '</div>';
           });
           html += '<div class="btns">' +
             '<button id="obv-copy">' + t('vw.copyJson') + '</button>' +
             '<button id="obv-paste">' + t('vw.pasteJson') + '</button>' +
+            '<button id="obv-newrec">' + t('vw.newRec') + '</button>' +
             '<button id="obv-export">' + t('vw.exportAll') + '</button>' +
             '<button id="obv-clear" class="danger">' + t('vw.clear') + '</button></div>';
           OB.utils.setHTML(box, html);
@@ -1383,43 +1613,58 @@
               box.querySelectorAll('.obv-sel[data-r="' + ri + '"]').forEach(function (cb) { cb.checked = allCb.checked; });
             });
           });
-          // 複製勾選項目為 JSON(給他人貼上匯入)
-          document.getElementById('obv-copy').onclick = function () {
-            var picked = []; // {billcode, goods, company}
-            var source = (active && active.source) || 'shared';
-            recs.forEach(function (r, ri) {
-              var allCb = box.querySelector('.obv-all[data-r="' + ri + '"]');
-              var items = r.items || [];
-              if (allCb && allCb.checked) {
-                items.forEach(function (it) { picked.push(it); });
-              } else {
-                box.querySelectorAll('.obv-sel[data-r="' + ri + '"]:checked').forEach(function (cb) {
-                  var b = cb.getAttribute('data-b');
-                  var it = items.find(function (x) { return x.billcode === b; });
-                  if (it) picked.push(it);
+          // 事件:手動編輯 / 刪除項 / 加項 / 刪記錄 / 新增記錄(只綁一次,引用共享狀態)
+          markLive();
+          if (!box.__obEvtBound) {
+            box.__obEvtBound = true;
+            box.addEventListener('input', function (e) {
+              if (e.target && e.target.classList && e.target.classList.contains('obv-in')) schedulePersist();
+            });
+            box.addEventListener('click', function (e) {
+              var el = e.target;
+              if (!el || !el.classList) return;
+              if (!_viewRecs) return;
+              if (el.classList.contains('obv-rowdel')) {
+                var ri = parseInt(el.getAttribute('data-r'), 10), ii = parseInt(el.getAttribute('data-ii'), 10);
+                var r = _viewRecs[ri];
+                var it = (r.items || [])[ii];
+                if (it && it.billcode && !confirm(t('vw.delItemAsk', { b: it.billcode }))) return;
+                flushNow().then(function () {
+                  if (r.items) r.items.splice(ii, 1);
+                  var tr2 = el.closest('tr');
+                  if (tr2) tr2.remove();
+                  schedulePersist();
+                });
+                return;
+              }
+              if (el.classList.contains('obv-additem')) {
+                if (_persistT) { clearTimeout(_persistT); _persistT = null; }
+                var ri2 = parseInt(el.getAttribute('data-r'), 10);
+                var r2 = _viewRecs[ri2];
+                if (!r2.items) r2.items = [];
+                r2.items.push({ billcode: '', goods: '', company: '' });
+                var wrap = el.closest('.obv-rec');
+                var tbl = wrap.querySelector('table');
+                var tr = document.createElement('tr');
+                OB.utils.setHTML(tr, addRowHtml(ri2, r2.items.length - 1, { billcode: '', goods: '', company: '' }));
+                tr.__live = true;
+                tbl.appendChild(tr);
+                tr.querySelector('.obv-in[data-f="billcode"]').focus();
+                schedulePersist();
+                return;
+              }
+              if (el.classList.contains('obv-recdel')) {
+                var ri3 = parseInt(el.getAttribute('data-r'), 10);
+                var r3 = _viewRecs[ri3];
+                if (!confirm(t('vw.delRecAsk'))) return;
+                flushNow().then(function () {
+                  OB.Bridge.remove(r3.id).then(function () { open(); });
                 });
               }
             });
-            if (!picked.length) {
-              toastMsg(t('vw.noneSel'));
-              return;
-            }
-            var payload = { ob: 'order-bridge/1', source: source, items: picked.map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; }) };
-            var txt = JSON.stringify(payload);
-            var doneFn = function () { toastMsg(t('vw.copied') + ' · ' + picked.length); };
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(txt).then(doneFn, function () { legacyCopy(txt); doneFn(); });
-            } else { legacyCopy(txt); doneFn(); }
-            function legacyCopy(s) {
-              try {
-                var ta = document.createElement('textarea');
-                ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
-                document.body.appendChild(ta); ta.select();
-                document.execCommand('copy');
-                ta.parentNode.removeChild(ta);
-              } catch (e) { prompt(t('vw.jsonPrompt'), s); }
-            }
-          };
+          }
+          var nr2 = document.getElementById('obv-newrec');
+          if (nr2) nr2.onclick = function () { newRecModal(); };
           bindPaste(box);
           return;
         }).catch(function (e) {
@@ -1428,14 +1673,127 @@
           OB.i18n.bindLangSel(box);
           bindPaste(box);
         });
+        // TM 5.5 GM 寫入延遲一輪 → 800ms 後強讀 GM/LS 較新版,有差異就重渲染
+        _openT = setTimeout(function () {
+          _openT = null;
+          if (_boxRef && _boxRef.style.display === 'none') return;
+          OB.Bridge.freshGet().then(function (fresh) {
+            var cur = OB.Bridge.loadMem();
+            if (!fresh || !cur) return;
+            if (JSON.stringify(fresh) !== JSON.stringify(cur)) {
+              _memCache = fresh; _memInit = true;
+              if (_boxRef && _boxRef.style.display !== 'none') open();
+            }
+          });
+        }, 800);
       }
 
+      // ---------- 手動編輯狀態(跨 open() 共享) ----------
+      var _viewBox = null, _viewRecs = null, _persistT = null, _viewGen = 0;
+      var MAX_VIEW = 50;
+      function recItems(ri) {
+        if (!_viewBox || !_viewRecs) return (_viewRecs && _viewRecs[ri] && _viewRecs[ri].items) || [];
+        var out = [];
+        var rows = _viewBox.querySelectorAll('.obv-row[data-r="' + ri + '"]');
+        rows.forEach(function (row) {
+          if (!row.__live) return;
+          var g = function (f) { var el = row.querySelector('.obv-in[data-f="' + f + '"]'); return el ? el.value : ''; };
+          if (g('billcode')) out.push({ billcode: g('billcode'), goods: g('goods'), company: g('company') });
+        });
+        var orig = _viewRecs[ri].items || [];
+        if (orig.length > MAX_VIEW) {
+          orig.slice(MAX_VIEW).forEach(function (it) {
+            if (it && it.billcode) out.push({ billcode: it.billcode, goods: it.goods || '', company: it.company || '' });
+          });
+        }
+        return out;
+      }
+      async function persistEdits() {
+        var myGen = _viewGen;
+        var store = await OB.Bridge.getAll({ fresh: true });
+        if (myGen !== _viewGen) return; // 期間 open() 已重渲染 → 快照過期
+        if (!store) return;
+        if (!_viewRecs) return;
+        var nonEmpty = (store.records || []).filter(function (r) { return r.items && r.items.length; });
+        if (nonEmpty.length !== _viewRecs.length) return;
+        var changed = false;
+        var removedEmpty = 0;
+        _viewRecs.forEach(function (r, ri) {
+          var inStore = store.records.some(function (x) { return x.id === r.id; });
+          if (!inStore) return;
+          // 該記錄的列若不在 DOM(尚未渲染/已被重渲染),跳過,避免舊快照蓋掉新資料
+          if (!_viewBox || !_viewBox.querySelector('.obv-row[data-r="' + ri + '"]')) return;
+          var fresh = recItems(ri);
+          if (!fresh.length && (r.items || []).length) {
+            removedEmpty[r.id] = 1;
+            return;
+          }
+          if (JSON.stringify(fresh) !== JSON.stringify(r.items || [])) {
+            r.items = fresh; r.ts = Date.now();
+            var rec2 = store.records.find(function (x) { return x.id === r.id; });
+            rec2.items = fresh; rec2.ts = r.ts;
+            changed = true;
+          }
+        });
+        if (removedEmpty) {
+          store.records = store.records.filter(function (x) { return !(x.id in removedEmpty); });
+          if (store.activeId in removedEmpty) store.activeId = store.records[0] ? store.records[0].id : '';
+          changed = true;
+        }
+        if (changed) { if (myGen !== _viewGen) return; await OB.Bridge.save(store); }
+      }
+      function schedulePersist() { if (_persistT) clearTimeout(_persistT); _persistT = setTimeout(persistEdits, 600); }
+      function flushNow() { if (_persistT) { clearTimeout(_persistT); _persistT = null; } return persistEdits(); }
+      function addRowHtml(ri, ii, it) {
+        it = it || { billcode: '', goods: '', company: '' };
+        return '<tr class="obv-row" data-ii="' + ii + '"><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode || '') + '"></td>' +
+          '<td><input class="obv-in" data-f="billcode" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.billcode || '') + '"></td>' +
+          '<td><input class="obv-in" data-f="goods" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.goods || '') + '"></td>' +
+          '<td><input class="obv-in" data-f="company" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.company || '') + '"></td>' +
+          '<td><button class="obv-del obv-rowdel" data-r="' + ri + '" data-ii="' + ii + '">' + t('vw.delItem') + '</button></td></tr>';
+      }
+      function markLive() {
+        if (_viewBox) _viewBox.querySelectorAll('.obv-row').forEach(function (row) { row.__live = true; });
+      }
+      // 新增記錄 modal(名稱 + 第一個單號/品名,可空)
+      function newRecModal() {
+        var pm = pmRef;
+        if (!pm) { OB.utils.notify('modal not ready'); return; }
+        OB.utils.setHTML(pm,
+          '<h4><span>' + t('vw.newRec') + '</span><span class="x" data-x>✕</span></h4>' +
+          '<div class="pmfields">' +
+          '<label>' + t('vw.fName') + '<input id="obv-nr-name" placeholder="orders.xlsx"></label>' +
+          '<label>' + t('vw.fBill') + '<input id="obv-nr-bill" placeholder="SF123456789"></label>' +
+          '<label>' + t('vw.fGoods') + '<input id="obv-nr-goods" placeholder="..."></label>' +
+          '</div>' +
+          '<div class="pfoot"><div class="pmsg"></div>' +
+          '<button id="obv-nr-cancel">' + t('vw.cancelBtn2') + '</button>' +
+          '<button id="obv-nr-ok" class="pri">' + t('vw.ok') + '</button></div>');
+        pm.style.display = 'block'; pm.__pmask.style.display = 'block';
+        pm.querySelector('[data-x]').onclick = closePaste;
+        pm.querySelector('#obv-nr-cancel').onclick = closePaste;
+        setTimeout(function () { pm.querySelector('#obv-nr-name').focus(); }, 50);
+        pm.querySelector('#obv-nr-ok').onclick = function () {
+          var name = (pm.querySelector('#obv-nr-name').value || '').trim() || 'orders.xlsx';
+          var bill = pm.querySelector('#obv-nr-bill').value.trim();
+          var goods = pm.querySelector('#obv-nr-goods').value.trim();
+          var items = bill ? [{ billcode: bill, goods: goods, company: '' }] : [];
+          if (_persistT) { clearTimeout(_persistT); _persistT = null; }
+          persistEdits().then(function () {
+            return OB.Bridge.add({ name: name, items: items });
+          }).then(function () {
+            closePaste();
+            toastMsg(t('vw.saved'));
+            open();
+          });
+        };
+      }
       // 貼上 JSON 按鈕 → 自製 modal(pasteModal 定義於 ensureDom 之後)
       function bindPaste(root) {
         var btn = (root || document).querySelector && (root || document).querySelector('#obv-paste');
         if (!btn || btn.__obBound) return;
         btn.__obBound = true;
-        btn.onclick = function () { pasteModal(); };
+        btn.onclick = function () { pasteModal(null, open); };
       }
 
       if (typeof GM_registerMenuCommand === 'function') {
@@ -1543,6 +1901,7 @@
         '</tr></thead><tbody id="ob-tbody"></tbody></table>' +
         '<div id="ob-result"></div>' +
         '<div style="margin-top:12px"><button class="primary" data-ob="submit" disabled>' + t('ui.submit') + '</button>' +
+        '<button class="primary" data-ob="submit-del" disabled>' + t('st.delAfter') + '</button>' +
         '<button data-ob="refresh">' + t('ui.reanalyze') + '</button></div>' +
         OB.i18n.langHtml())
       document.body.appendChild(panelMask);
@@ -1594,7 +1953,6 @@
         await OB.Bridge.setActive(rec.id);
         setStatus(t('ui.readOk', {
           f: esc(rec.name),
-          s: t('src.source', { s: esc(rec.source || '?') }),
           n: items.length,
           e: errors.length ? t('ui.readErrs', { e: errors.map(esc).join('<br>') }) : ''
         }));
@@ -1674,6 +2032,8 @@
         });
         $('#ob-table').style.display = 'block';
         $('[data-ob="submit"]').disabled = !count;
+        var _sdc = $('[data-ob="submit-del"]');
+        if (_sdc) _sdc.disabled = !count;
         state.pending = rows;
         state.planCount = count;
         $('#ob-check-all').checked = true;
@@ -1685,7 +2045,7 @@
         var inp = tr.querySelector('input[data-f="goods"]');
         return inp ? inp.value.trim() : '';
       }
-      function submit() {
+      function submit(delAfter) {
         var doEditEmpty = $('[data-ob="edit-empty"]').checked;
         var doEditFill = $('[data-ob="edit-fill"]').checked;
         var tbodyRows = Array.prototype.slice.call($('#ob-tbody').querySelectorAll('tr'));
@@ -1704,6 +2064,8 @@
         });
         if (!jobs.length) { setStatus(t('ui.noneChecked')); return; }
         $('[data-ob="submit"]').disabled = true;
+        var _sdd = $('[data-ob="submit-del"]');
+        if (_sdd) _sdd.disabled = true;
         var resultDiv = $('#ob-result');
         OB.utils.setHTML(resultDiv, '<div class="ob-ok">' + t('ui.submitting') + '</div>')
         var okN = 0, failN = 0;
@@ -1719,11 +2081,27 @@
         }
         function done() {
           $('[data-ob="submit"]').disabled = false;
+          var _sde = $('[data-ob="submit-del"]');
+          if (_sde) _sde.disabled = false;
+          var extraNote = '';
+          if (delAfter) {
+            var doneBills = [];
+            jobs.forEach(function (j) {
+              var resTd = j.tr.querySelector('.c-res');
+              if (resTd && resTd.querySelector('.ob-ok')) doneBills.push(j.row.item.billcode);
+            });
+            if (doneBills.length) {
+              OB.Bridge.removeItems(doneBills).then(function () {
+                extraNote = ' ' + t('st.delAfterDone', { n: doneBills.length });
+                OB.utils.notify(t('st.delAfterDone', { n: doneBills.length }));
+              });
+            }
+          }
           var ar = $('[data-ob="auto-refresh"]');
           var willRefresh = ar && ar.checked;
           OB.utils.setHTML(resultDiv, '<div class="' + (failN ? 'ob-err' : 'ob-ok') + '">' +
             (failN ? t('ui.done', { a: okN, b: failN }) : t('ui.doneAll', { n: okN })) +
-            (willRefresh ? t('ui.willRefresh') : '') + '</div>')
+            (willRefresh ? t('ui.willRefresh') : '') + extraNote + '</div>')
           OB.utils.notify(t('ui.notifyDone', { a: okN, b: failN, r: willRefresh ? t('ui.refreshNote') : '' }));
           if (willRefresh) {
             try { sessionStorage.setItem('__OB_REOPEN', '1'); } catch (e) { }
@@ -1777,6 +2155,7 @@
         else if (ob === 'pick-file') pickFile();
         else if (ob === 'refresh') runAnalysis();
         else if (ob === 'submit') submit();
+        else if (ob === 'submit-del') submit(true);
       });
       $('[data-ob="edit-empty"]').addEventListener('change', function () { if (state.parsed) runAnalysis(); });
       $('[data-ob="edit-fill"]').addEventListener('change', function () { if (state.parsed) runAnalysis(); });
@@ -1822,6 +2201,7 @@
             '</tr></thead><tbody id="ob-tbody"></tbody></table>' +
             '<div id="ob-result"></div>' +
             '<div style="margin-top:12px"><button class="primary" data-ob="submit" disabled>' + t('ui.submit') + '</button>' +
+            '<button class="primary" data-ob="submit-del" disabled>' + t('st.delAfter') + '</button>' +
             '<button data-ob="refresh">' + t('ui.reanalyze') + '</button></div>' +
             OB.i18n.langHtml())
           OB.i18n.bindLangSel(panel);
