@@ -1533,7 +1533,7 @@
       OB.UI.openViewer = open; // 供來源/站點 FAB 共用同一視窗
       var _openT = null;
       function open() {
-        if (_openT) { clearTimeout(_openT); _openT = null; }
+                if (_openT) { clearTimeout(_openT); _openT = null; }
         var box = ensureDom();
         // SPA 頁面(如 GitHub)可能把注入節點從 body 移除 → 重新掛回
         [box, maskRef, pmRef, pmRef && pmRef.__pmask, pmRef && pmRef.__toast].forEach(function (el) {
@@ -1746,7 +1746,7 @@
       function flushNow() { if (_persistT) { clearTimeout(_persistT); _persistT = null; } return persistEdits(); }
       function addRowHtml(ri, ii, it) {
         it = it || { billcode: '', goods: '', company: '' };
-        return '<tr class="obv-row" data-ii="' + ii + '"><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode || '') + '"></td>' +
+        return '<tr class="obv-row" data-r="' + ri + '" data-ii="' + ii + '"><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode || '') + '"></td>' +
           '<td><input class="obv-in" data-f="billcode" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.billcode || '') + '"></td>' +
           '<td><input class="obv-in" data-f="goods" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.goods || '') + '"></td>' +
           '<td><input class="obv-in" data-f="company" data-r="' + ri + '" data-ii="' + ii + '" value="' + OB.utils.esc(it.company || '') + '"></td>' +
