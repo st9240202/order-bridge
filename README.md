@@ -66,3 +66,15 @@ OB.UI       (面板/FAB/預覽/暫存管理)
 - v3.1.0 — GM_setValue 跨站儲存(TM 5.5 content world 下 chrome.storage 不注入)
 - v3.0.0 — 通用化 OB.Sources / OB.Sites 架構
 - v2.x — 單一 script(淘寶+聖天)直連版
+
+## 多語言(i18n)
+
+支援 **繁體中文(預設)/ 簡體中文 / 英文**,透過 `OB.i18n` 模組:
+
+- **自動偵測**:優先讀 GM 值 `ob_lang`(手動選擇過就記住),否則依 `navigator.language` 判斷(zh-CN→簡體,其餘 zh→繁體,其他→英文)
+- **切換**:導入面板 / 檢視視窗 / 管理面板右上角有語言下拉,選完立即重渲染並記憶(GM_setValue)
+- **全域**:語言是 GM 值,一次設定後所有網頁(聖天/淘寶/任何檢視頁)都用同一語言
+- 任何頁面都能:TM 選單「📋 Order Bridge 暫存清單」或 `Ctrl+Shift+B` 開啟檢視視窗,右上下拉切語言
+- 手動 API:`window.__OB_I18N.setLang('en'|'zh-TW'|'zh-CN')`
+
+> 技術:`OB.utils.setHTML(el, html)` 對 CSP 嚴格的頁面(如 YouTube 的 TrustedHTML)會自動退回純 DOM 解析(`elFromHTML`),確保檢視視窗在**任何網頁**都能開啟。

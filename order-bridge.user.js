@@ -401,9 +401,67 @@
   // ===================== OB.utils =====================
   function $(sel, root) { return (root || document).querySelector(sel); }
   function esc(s) {
-    var d = document.createElement('div');
-    d.textContent = s == null ? '' : String(s);
-    return d.innerHTML;
+    s = s == null ? '' : String(s);
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function unesc(s) {
+    return s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  }
+  // TrustedHTML-safe:YouTube 等 CSP 頁面禁用 innerHTML/document.write,
+  // 這裡用小型 HTML→DOM 解析器(純 createElement/setAttribute)兜底
+  var VOID_TAGS = { br: 1, hr: 1, input: 1, img: 1 };
+  function elFromHTML(html, doc) {
+    doc = doc || document;
+    var root = doc.createElement('div');
+    var stack = [root];
+    var text = '';
+    function flush() { if (text) { stack[stack.length - 1].appendChild(doc.createTextNode(unesc(text))); text = ''; } }
+    var OPEN_RE = /<([a-zA-Z][\w-]*)([^>]*?)\s*\/?>/;
+    var CLOSE_RE = /<\/(\w+)[^>]*>/;
+    var attrRe = /([\w:-]+)(?:=("[^"]*"|'[^']*'))?/g;
+    var pos = 0;
+    while (pos < html.length) {
+      var lt = html.indexOf('<', pos);
+      if (lt === -1) { text += html.slice(pos); break; }
+      if (lt > pos) { text += html.slice(pos, lt); pos = lt; }
+      var slice = html.slice(lt, Math.min(lt + 2000, html.length));
+      var mOpen = OPEN_RE.exec(slice);
+      var mClose = CLOSE_RE.exec(slice);
+      if (mClose && (!mOpen || mClose.index <= mOpen.index)) {
+        flush();
+        pos = lt + mClose[0].length;
+        if (stack.length > 1) stack.pop();
+        continue;
+      }
+      if (!mOpen) { flush(); break; }
+      pos = lt + mOpen[0].length;
+      flush();
+      var tag = mOpen[1].toLowerCase();
+      var node = doc.createElement(tag);
+      var attrs = mOpen[2] || '', am;
+      attrRe.lastIndex = 0;
+      while ((am = attrRe.exec(attrs))) {
+        if (!am[1]) continue;
+        if (am[1] === 'class') node.className = am[2] ? unesc(am[2].slice(1, -1)) : '';
+        else node.setAttribute(am[1], am[2] ? unesc(am[2].slice(1, -1)) : '');
+      }
+      var boolRe = /\b(checked|disabled|selected|readonly)\b(?!\s*=)/g, bm;
+      while ((bm = boolRe.exec(attrs))) node.setAttribute(bm[1], bm[1]);
+      stack[stack.length - 1].appendChild(node);
+      if (!VOID_TAGS[tag] && !/\/>$/.test(mOpen[0])) stack.push(node);
+    }
+    flush();
+    return root;
+  }
+  // 安全替換元素內容:CSP 頁面 innerHTML 會拋錯時退回純 DOM 路徑
+  function setHTML(el, html) {
+    try { el.innerHTML = html; }
+    catch (e) {
+      el.textContent = '';
+      var r = elFromHTML(html);
+      var kids = Array.prototype.slice.call(r.childNodes);
+      for (var i = 0; i < kids.length; i++) el.appendChild(kids[i]);
+    }
   }
   function billcodeValid(s) { return typeof s === 'string' && /^[0-9A-Za-z]{8,20}$/.test(s); }
   function notify(text) {
@@ -482,7 +540,7 @@
     }).join('') + '</table>' + (items.length > MAX ? '<div class="more">' + t('prev.more', { n: items.length - MAX }) + '</div>' : '');
     return html;
   }
-  OB.utils = { $: $, esc: esc, billcodeValid: billcodeValid, notify: notify, bufToB64: bufToB64, b64ToBuf: b64ToBuf, downloadRecord: downloadRecord, loadSheetJs: loadSheetJs, fmtTs: fmtTs, itemsPreviewHtml: itemsPreviewHtml };
+  OB.utils = { $: $, esc: esc, unesc: unesc, billcodeValid: billcodeValid, notify: notify, bufToB64: bufToB64, b64ToBuf: b64ToBuf, downloadRecord: downloadRecord, loadSheetJs: loadSheetJs, fmtTs: fmtTs, itemsPreviewHtml: itemsPreviewHtml, setHTML: setHTML, elFromHTML: elFromHTML };
 
   // ===================== 方言解析(xlsx → Item[]) =====================
   // 每個 Source 可帶自己的 parseBuffer(buf);預設/淘寶方言如下(簡/繁表頭皆可)
@@ -871,7 +929,7 @@
             '<div class="cfoot"><label><input type="checkbox" id="ob-src-call" checked> ' + t('src.selectAll') + '</label>' +
             '<button id="ob-src-ccancel">' + t('src.cancelBtn') + '</button>' +
             '<button class="c-ok" id="ob-src-cok">' + t('src.okBtn') + '</button></div>';
-          confirmBox.innerHTML = html;
+          OB.utils.setHTML(confirmBox, html)
           confirmMask.style.display = 'block';
           confirmBox.style.display = 'block';
           function close() { confirmMask.style.display = 'none'; confirmBox.style.display = 'none'; }
@@ -898,10 +956,10 @@
         wrap.id = 'ob-src-fabs';
         var fab = document.createElement('button');
         fab.id = 'ob-src-fab';
-        fab.innerHTML = '<span class="ico">📦</span><span class="lbl">' + t('lblExport') + '</span>';
+        OB.utils.setHTML(fab, '<span class="ico">📦</span><span class="lbl">' + t('lblExport') + '</span>')
         var mgrBtn = document.createElement('button');
         mgrBtn.id = 'ob-src-mgr';
-        mgrBtn.innerHTML = '<span class="ico">🗂</span><span class="lbl">' + t('lblCache') + '</span>';
+        OB.utils.setHTML(mgrBtn, '<span class="ico">🗂</span><span class="lbl">' + t('lblCache') + '</span>')
         wrap.appendChild(fab);
         wrap.appendChild(mgrBtn);
         function setLbl(b, t2) { var l = b.querySelector('.lbl'); if (l) l.textContent = t2; else b.textContent = t2; }
@@ -983,19 +1041,19 @@
           var title = '<h4><span>' + t('src.adminTitle') + '</span>' +
             '<button id="ob-src-admin-x" style="border:none;background:none;font-size:18px;cursor:pointer">✕</button></h4>';
           if (!r) {
-            admin.innerHTML = title +
-              '<div class="ob-rec" style="color:#999">' + t('src.empty') + '</div>';
+            OB.utils.setHTML(admin, title +
+              '<div class="ob-rec" style="color:#999">' + t('src.empty') + '</div>')
           } else {
-            admin.innerHTML = title +
+            OB.utils.setHTML(admin, title +
               '<div class="meta" style="padding:8px 14px 0;color:#999;font-size:12px">' +
               OB.utils.fmtTs(r.ts) + ' · ' + t('src.source', { s: r.source || '?' }) +
               (r.items ? ' · ' + t('src.nItems', { n: r.items.length }) : '') + '</div>' +
-              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : '');
+              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : ''))
             var foot = document.createElement('div');
             foot.style.cssText = 'padding:8px 14px;text-align:right;border-top:1px solid #eee';
-            foot.innerHTML =
+            OB.utils.setHTML(foot, 
               '<button id="ob-src-admin-dl" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">' + t('src.dlBtn') + '</button>' +
-              '<button id="ob-src-admin-clear" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>';
+              '<button id="ob-src-admin-clear" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>')
             admin.appendChild(foot);
           }
           admin.style.display = 'block';
@@ -1180,7 +1238,7 @@
       function open() {
         var box = ensureDom();
         document.getElementById('obv-mask').style.display = 'block';
-        box.innerHTML = '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta">' + t('vw.loading') + '</div>' + OB.i18n.langHtml();
+        OB.utils.setHTML(box, '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta">' + t('vw.loading') + '</div>' + OB.i18n.langHtml())
         box.style.display = 'block';
         box.querySelector('[data-x]').onclick = close;
         OB.i18n.bindLangSel(box);
@@ -1191,7 +1249,7 @@
           var html = '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3>' + OB.i18n.langHtml();
           if (!recs.length) {
             html += '<div class="meta">' + t('vw.emptyNote') + '</div>';
-            box.innerHTML = html;
+            OB.utils.setHTML(box, html)
             box.querySelector('[data-x]').onclick = close;
             OB.i18n.bindLangSel(box);
             return;
@@ -1206,7 +1264,7 @@
           html += '<div class="btns">' +
             '<button id="obv-export">' + t('vw.exportAll') + '</button>' +
             '<button id="obv-clear" class="danger">' + t('vw.clear') + '</button></div>';
-          box.innerHTML = html;
+          OB.utils.setHTML(box, html)
           box.querySelector('[data-x]').onclick = close;
           OB.i18n.bindLangSel(box);
           var active = null;
@@ -1219,7 +1277,7 @@
           };
           return;
         }).catch(function (e) {
-          box.innerHTML = '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta" style="color:#cf1322">' + t('vw.readFail', { m: OB.utils.esc(e.message) }) + '</div>' + OB.i18n.langHtml();
+          OB.utils.setHTML(box, '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta" style="color:#cf1322">' + t('vw.readFail', { m: OB.utils.esc(e.message) }) + '</div>' + OB.i18n.langHtml())
           box.querySelector('[data-x]').onclick = close;
           OB.i18n.bindLangSel(box);
         });
@@ -1297,11 +1355,11 @@
       var fab = document.createElement('button');
       fab.id = 'ob-fab';
       fab.title = t('st.titleImport', { s: site.name });
-      fab.innerHTML = '<span class="ob-fico">📦</span><span class="ob-flbl">' + t('st.lblImport') + '</span>';
+      OB.utils.setHTML(fab, '<span class="ob-fico">📦</span><span class="ob-flbl">' + t('st.lblImport') + '</span>')
       var fabMgr = document.createElement('button');
       fabMgr.id = 'ob-fab-mgr';
       fabMgr.title = t('st.titleCache');
-      fabMgr.innerHTML = '<span class="ob-fico">🗂</span><span class="ob-flbl">' + t('st.lblCache') + '</span>';
+      OB.utils.setHTML(fabMgr, '<span class="ob-fico">🗂</span><span class="ob-flbl">' + t('st.lblCache') + '</span>')
       fabDock.appendChild(fab);
       fabDock.appendChild(fabMgr);
       document.body.appendChild(fabDock);
@@ -1316,7 +1374,7 @@
       function openPanel() { panel.style.display = 'block'; panelMask.style.display = 'block'; }
       function closePanel() { panel.style.display = 'none'; panelMask.style.display = 'none'; }
       panelMask.onclick = closePanel;
-      panel.innerHTML =
+      OB.utils.setHTML(panel, 
         '<span class="ob-close" data-ob="close">✕</span>' +
         '<h3>' + esc(t('ui.importTo', { s: esc(site.name) })) + '</h3>' +
         '<div id="ob-bridge-status"></div>' +
@@ -1332,7 +1390,7 @@
         '<div id="ob-result"></div>' +
         '<div style="margin-top:12px"><button class="primary" data-ob="submit" disabled>' + t('ui.submit') + '</button>' +
         '<button data-ob="refresh">' + t('ui.reanalyze') + '</button></div>' +
-        OB.i18n.langHtml();
+        OB.i18n.langHtml())
       document.body.appendChild(panelMask);
       document.body.appendChild(panel);
       OB.i18n.bindLangSel(panel);
@@ -1341,8 +1399,8 @@
 
       function $(sel, root) { return OB.utils.$(sel, root || panel); }
       function esc(s) { return OB.utils.esc(s); }
-      function setStatus(html) { $('#ob-status').innerHTML = html; }
-      function setBridgeStatus(html) { $('#ob-bridge-status').innerHTML = html; }
+      function setStatus(html) { OB.utils.setHTML($('#ob-status'), html); }
+      function setBridgeStatus(html) { OB.utils.setHTML($('#ob-bridge-status'), html); }
 
       // ---------- 暫存管理選單 ----------
       var admin = document.createElement('div');
@@ -1358,19 +1416,19 @@
           var title = '<h4><span>' + t('st.adminTitle') + '</span>' +
             '<button id="ob-admin-x" style="border:none;background:none;font-size:18px;cursor:pointer">✕</button></h4>';
           if (!r) {
-            admin.innerHTML = title +
-              '<div class="ob-rec" style="color:#999">' + t('st.empty') + '</div>';
+            OB.utils.setHTML(admin, title +
+              '<div class="ob-rec" style="color:#999">' + t('st.empty') + '</div>')
           } else {
-            admin.innerHTML = title +
+            OB.utils.setHTML(admin, title +
               '<div class="meta" style="padding:8px 14px 0;color:#999;font-size:12px">' +
               OB.utils.fmtTs(r.ts) + ' · ' + t('src.source', { s: r.source || '?' }) +
               (r.items ? ' · ' + t('src.nItems', { n: r.items.length }) : '') + '</div>' +
-              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : '');
+              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : ''))
             var foot2 = document.createElement('div');
             foot2.style.cssText = 'padding:8px 14px;text-align:right;border-top:1px solid #eee';
-            foot2.innerHTML =
+            OB.utils.setHTML(foot2, 
               '<button id="ob-admin-dl" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">' + t('src.dlBtn') + '</button>' +
-              '<button id="ob-admin-clear" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>';
+              '<button id="ob-admin-clear" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>')
             admin.appendChild(foot2);
             $('#ob-admin-dl', admin).onclick = function () { OB.utils.downloadRecord(r); };
             $('#ob-admin-clear', admin).onclick = function () {
@@ -1476,7 +1534,7 @@
         var editEmptyOn = $('[data-ob="edit-empty"]').checked;
         var editFillOn = $('[data-ob="edit-fill"]').checked;
         var tbody = $('#ob-tbody');
-        tbody.innerHTML = '';
+        OB.utils.setHTML(tbody, '')
         var count = 0;
         rows.forEach(function (row, idx) {
           var doEdit = (row.action === 'edit-new' && editEmptyOn) || (row.action === 'edit-fill' && editFillOn);
@@ -1487,14 +1545,14 @@
           var tr = document.createElement('tr');
           tr.setAttribute('data-idx', idx);
           var checked = (row.action === 'new') ? 'checked' : (doEdit ? 'checked' : '');
-          tr.innerHTML =
+          OB.utils.setHTML(tr, 
             '<td><input type="checkbox" data-f="sel" ' + checked + '></td>' +
             '<td class="c-bill">' + esc(row.item.billcode) + '</td>' +
             '<td>' + esc(row.item.company || '') + '</td>' +
             '<td class="c-goods"><input data-f="goods" value="' + esc(row.item.goods) + '"></td>' +
             '<td>' + badge +
             (row.existing && row.existing.goods ? '<div style="color:#999;font-size:11px">' + t('ui.existing', { g: esc(row.existing.goods) }) + '</div>' : '') +
-            '</td><td class="c-res">-</td>';
+            '</td><td class="c-res">-</td>')
           tbody.appendChild(tr);
         });
         $('#ob-table').style.display = 'block';
@@ -1530,7 +1588,7 @@
         if (!jobs.length) { setStatus(t('ui.noneChecked')); return; }
         $('[data-ob="submit"]').disabled = true;
         var resultDiv = $('#ob-result');
-        resultDiv.innerHTML = '<div class="ob-ok">' + t('ui.submitting') + '</div>';
+        OB.utils.setHTML(resultDiv, '<div class="ob-ok">' + t('ui.submitting') + '</div>')
         var okN = 0, failN = 0;
         // 1) 新預報:分組(每 10 筆)
         var newJobs = jobs.filter(function (j) { return j.act === 'new'; });
@@ -1539,16 +1597,16 @@
         for (var i = 0; i < newJobs.length; i += MAX_ROWS_PER_SUBMIT) chunks.push(newJobs.slice(i, i + MAX_ROWS_PER_SUBMIT));
         function markJob(j, ok, msg) {
           var resTd = j.tr.querySelector('.c-res');
-          if (ok) { okN++; resTd.innerHTML = '<span class="ob-ok">' + esc(j.act === 'new' ? t('ui.okNew') : t('ui.okEdit')) + '</span>'; }
-          else { failN++; resTd.innerHTML = '<span class="ob-err">' + esc(t('ui.fail', { m: msg || t('site.fail') })) + '</span>'; }
+          if (ok) { okN++; OB.utils.setHTML(resTd, '<span class="ob-ok">' + esc(j.act === 'new' ? t('ui.okNew') : t('ui.okEdit')) + '</span>'); }
+          else { failN++; OB.utils.setHTML(resTd, '<span class="ob-err">' + esc(t('ui.fail', { m: msg || t('site.fail') })) + '</span>'); }
         }
         function done() {
           $('[data-ob="submit"]').disabled = false;
           var ar = $('[data-ob="auto-refresh"]');
           var willRefresh = ar && ar.checked;
-          resultDiv.innerHTML = '<div class="' + (failN ? 'ob-err' : 'ob-ok') + '">' +
+          OB.utils.setHTML(resultDiv, '<div class="' + (failN ? 'ob-err' : 'ob-ok') + '">' +
             (failN ? t('ui.done', { a: okN, b: failN }) : t('ui.doneAll', { n: okN })) +
-            (willRefresh ? t('ui.willRefresh') : '') + '</div>';
+            (willRefresh ? t('ui.willRefresh') : '') + '</div>')
           OB.utils.notify(t('ui.notifyDone', { a: okN, b: failN, r: willRefresh ? t('ui.refreshNote') : '' }));
           if (willRefresh) {
             try { sessionStorage.setItem('__OB_REOPEN', '1'); } catch (e) { }
@@ -1632,7 +1690,7 @@
             checkedRows.push(!!(c && c.checked));
           });
           var editE = $('[data-ob="edit-empty"]').checked, editF = $('[data-ob="edit-fill"]').checked;
-          panel.innerHTML =
+          OB.utils.setHTML(panel, 
             '<span class="ob-close" data-ob="close">✕</span>' +
             '<h3>' + esc(t('ui.importTo', { s: esc(site.name) })) + '</h3>' +
             '<div id="ob-bridge-status"></div>' +
@@ -1648,7 +1706,7 @@
             '<div id="ob-result"></div>' +
             '<div style="margin-top:12px"><button class="primary" data-ob="submit" disabled>' + t('ui.submit') + '</button>' +
             '<button data-ob="refresh">' + t('ui.reanalyze') + '</button></div>' +
-            OB.i18n.langHtml();
+            OB.i18n.langHtml())
           OB.i18n.bindLangSel(panel);
           if (state.parsed && state.rec) {
             autoLoadBridge().then(function (rec) {
