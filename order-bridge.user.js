@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.19
+// @version      3.2.20.1
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -155,6 +155,11 @@
         'vw.noneSel': '請先勾選至少一個項目',
         'vw.copied': '已複製到剪貼簿',
         'vw.dlRec': '匯出 xlsx',
+        'vw.pasteTitle': '貼上 JSON 匯入',
+        'vw.pastePh': '在此貼上對方傳來的 JSON…',
+        'vw.importBtn': '匯入',
+        'vw.cancelBtn2': '取消',
+        'vw.pasteDone': '✅ {m}',
         'ui.langLabel': '語言',
         'site.fail': '失敗',
         'site.badResp': '回應異常',
@@ -269,6 +274,11 @@
         'vw.noneSel': '请先勾选至少一个项目',
         'vw.copied': '已复制到剪贴板',
         'vw.dlRec': '导出 xlsx',
+        'vw.pasteTitle': '粘贴 JSON 导入',
+        'vw.pastePh': '在此粘贴对方传来的 JSON…',
+        'vw.importBtn': '导入',
+        'vw.cancelBtn2': '取消',
+        'vw.pasteDone': '✅ {m}',
         'ui.langLabel': '语言',
         'site.fail': '失败',
         'site.badResp': '响应异常',
@@ -383,6 +393,11 @@
         'vw.noneSel': 'Please check at least one item',
         'vw.copied': 'Copied to clipboard',
         'vw.dlRec': 'Export xlsx',
+        'vw.pasteTitle': 'Paste JSON to import',
+        'vw.pastePh': 'Paste the JSON you received here…',
+        'vw.importBtn': 'Import',
+        'vw.cancelBtn2': 'Cancel',
+        'vw.pasteDone': '✅ {m}',
         'ui.langLabel': 'Language',
         'site.fail': 'Failed',
         'site.badResp': 'Bad response',
@@ -1212,25 +1227,97 @@
         '#obv td.c-bill{white-space:nowrap;color:#555;font-family:monospace}' +
         '#obv .btns{margin-top:10px;text-align:right}' +
         '#obv .btns button{padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;margin-left:8px}' +
-        '#obv .btns .danger{color:#cf1322;border-color:#ffa39e}';
+        '#obv .btns .danger{color:#cf1322;border-color:#ffa39e}' +
+        '#obv-paste-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:none}' +
+        '#obv-pastebox{position:fixed;left:50%;top:14vh;transform:translateX(-50%);width:min(92vw,640px);background:#fff;border-radius:12px;box-shadow:0 12px 48px rgba(0,0,0,.3);z-index:100000;overflow:hidden;font-family:inherit;text-align:left}' +
+        '#obv-pastebox h4{margin:0;padding:14px 18px;border-bottom:1px solid #f0f0f0;font-size:15px;display:flex;justify-content:space-between;align-items:center}' +
+        '#obv-pastebox .x{cursor:pointer;font-size:18px;color:#999}' +
+        '#obv-pastebox textarea{display:block;width:100%;box-sizing:border-box;height:240px;padding:12px 16px;border:none;border-bottom:1px solid #f0f0f0;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#333;outline:none;line-height:1.5}' +
+        '#obv-pastebox .pfoot{padding:10px 16px;display:flex;align-items:center;gap:8px}' +
+        '#obv-pastebox .pfoot .pmsg{flex:1;font-size:12px;color:#cf1322;min-height:16px}' +
+        '#obv-pastebox .pfoot button{padding:6px 18px;border:1px solid #d9d9d9;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit}' +
+        '#obv-pastebox .pfoot .pri{background:#1890ff;border-color:#1890ff;color:#fff}' +
+        '#ob-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-8px);background:rgba(50,50,50,.92);color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;z-index:100001;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.2);font-family:system-ui,sans-serif;max-width:80vw}' +
+        '#ob-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}';
 
+      var _boxRef = null, pmRef = null, maskRef = null;
       function ensureDom() {
-        if (document.getElementById('obv')) return document.getElementById('obv');
+        if (_boxRef) return _boxRef;
+        var _b = document.getElementById('obv');
+        if (_b) { _boxRef = _b; return _b; }
         var st = document.createElement('style');
         st.textContent = VIEWER_CSS + (OB.UI._extraStyle || '');
         document.head.appendChild(st);
         var mask = document.createElement('div'); mask.id = 'obv-mask';
         var box = document.createElement('div'); box.id = 'obv';
         mask.onclick = function () { mask.style.display = 'none'; box.style.display = 'none'; };
-        document.body.appendChild(mask); document.body.appendChild(box);
+        // 貼上 JSON 的對話框(替代原生 prompt)
+        var pmask = document.createElement('div'); pmask.id = 'obv-paste-mask';
+        var pm = document.createElement('div'); pm.id = 'obv-pastebox';
+        pmask.onclick = function (e) { if (e.target === pmask) closePaste(); };
+        // toast(複製成功等回饋)
+        var toast = document.createElement('div'); toast.id = 'ob-toast';
+        pm.__pmask = pmask; pm.__toast = toast;
+        document.body.appendChild(mask); document.body.appendChild(pmask); document.body.appendChild(pm); document.body.appendChild(box); document.body.appendChild(toast);
+        _boxRef = box; pmRef = pm; maskRef = mask;
         return box;
       }
+      var _toastTimer = null;
+      function toastMsg(text) {
+        // 沙箱 window 下 document.getElementById 找不到 userscript 造的節點 → 閉包引用優先
+        var el = (typeof document.getElementById('ob-toast') === 'object' && document.getElementById('ob-toast')) || (pmRef && pmRef.__toast);
+        if (!el) { OB.utils.notify(text); return; }
+        el.textContent = text;
+        el.classList.add('show');
+        if (_toastTimer) clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2200);
+      }
+      function closePaste() {
+        if (pmRef) { pmRef.style.display = 'none'; if (pmRef.__pmask) pmRef.__pmask.style.display = 'none'; }
+      }
+      // 貼上 JSON → 合併進暫存區(接收方);UI = 自製 modal,不用原生 prompt/alert
+      function pasteModal(getText, onDone) {
+        var pm = pmRef;
+        if (!pm) { OB.utils.notify('modal not ready'); return; }
+        OB.utils.setHTML(pm,
+          '<h4><span>' + t('vw.pasteTitle') + '</span><span class="x" data-x>✕</span></h4>' +
+          '<textarea id="obv-paste-ta" placeholder="' + t('vw.pastePh') + '"></textarea>' +
+          '<div class="pfoot"><div class="pmsg" id="obv-paste-msg"></div>' +
+          '<button id="obv-paste-cancel">' + t('vw.cancelBtn2') + '</button>' +
+          '<button id="obv-paste-ok" class="pri">' + t('vw.importBtn') + '</button></div>');
+        pm.style.display = 'block'; pm.__pmask.style.display = 'block';
+        pm.querySelector('[data-x]').onclick = closePaste;
+        pm.querySelector('#obv-paste-cancel').onclick = closePaste;
+        var ta = pm.querySelector('#obv-paste-ta');
+        setTimeout(function () { ta.focus(); }, 50);
+        pm.querySelector('#obv-paste-ok').onclick = function () {
+          var txt = (getText ? getText() : ta.value) || '';
+          if (!txt.trim()) { toastMsg(t('vw.jsonEmpty')); return; }
+          var data;
+          try { data = JSON.parse(txt); } catch (e) { toastMsg(t('vw.jsonFail', { m: e.message })); return; }
+          var items = (Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []))
+            .filter(function (it) { return it && typeof it.billcode === 'string'; })
+            .map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; });
+          if (!items.length) { toastMsg(t('vw.jsonEmpty')); return; }
+          var source = (data && !Array.isArray(data) && data.source) || 'shared';
+          var name = (data && !Array.isArray(data) && data.name) || 'shared-import';
+          OB.Bridge.merge(items, { source: source, name: name }).then(function (m) {
+            closePaste();
+            toastMsg(t('vw.pasteDone', { m: t('vw.jsonOk', { n: m.added, s: source }) + (m.dup ? ' · ' + t('vw.jsonDup', { n: m.dup }) : '') }));
+            if (onDone) onDone();
+          });
+        };
+      }
 
-      function close() { var b = document.getElementById('obv'); if (b) b.style.display = 'none'; var m = document.getElementById('obv-mask'); if (m) m.style.display = 'none'; }
+      function close() { if (_boxRef) _boxRef.style.display = 'none'; if (maskRef) maskRef.style.display = 'none'; }
       OB.UI.openViewer = open; // 供來源/站點 FAB 共用同一視窗
       function open() {
         var box = ensureDom();
-        document.getElementById('obv-mask').style.display = 'block';
+        // SPA 頁面(如 GitHub)可能把注入節點從 body 移除 → 重新掛回
+        [box, maskRef, pmRef, pmRef && pmRef.__pmask, pmRef && pmRef.__toast].forEach(function (el) {
+          if (el && el.parentNode !== document.body) document.body.appendChild(el);
+        });
+        maskRef.style.display = 'block';
         OB.utils.setHTML(box, '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta">' + t('vw.loading') + '</div>' + OB.i18n.langHtml())
         box.style.display = 'block';
         box.querySelector('[data-x]').onclick = close;
@@ -1314,15 +1401,15 @@
               }
             });
             if (!picked.length) {
-              OB.utils.notify(t('vw.noneSel'));
+              toastMsg(t('vw.noneSel'));
               return;
             }
             var payload = { ob: 'order-bridge/1', source: source, items: picked.map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; }) };
             var txt = JSON.stringify(payload);
+            var doneFn = function () { toastMsg(t('vw.copied') + ' · ' + picked.length); };
             if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(txt).then(function () { OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); },
-                function () { legacyCopy(txt); OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); });
-            } else { legacyCopy(txt); OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); }
+              navigator.clipboard.writeText(txt).then(doneFn, function () { legacyCopy(txt); doneFn(); });
+            } else { legacyCopy(txt); doneFn(); }
             function legacyCopy(s) {
               try {
                 var ta = document.createElement('textarea');
@@ -1343,27 +1430,12 @@
         });
       }
 
-      // 貼上 JSON → 合併進暫存區(接收方)
+      // 貼上 JSON 按鈕 → 自製 modal(pasteModal 定義於 ensureDom 之後)
       function bindPaste(root) {
         var btn = (root || document).querySelector && (root || document).querySelector('#obv-paste');
         if (!btn || btn.__obBound) return;
         btn.__obBound = true;
-        btn.onclick = function () {
-          var txt = prompt(t('vw.jsonPrompt'), '');
-          if (txt == null) return;
-          var data;
-          try { data = JSON.parse(txt); } catch (e) { alert(t('vw.jsonFail', { m: e.message })); return; }
-          var items = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
-          items = items.filter(function (it) { return it && typeof it.billcode === 'string'; })
-            .map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; });
-          if (!items.length) { alert(t('vw.jsonEmpty')); return; }
-          var source = (data && !Array.isArray(data) && data.source) || 'shared';
-          var name = (data && !Array.isArray(data) && data.name) || 'shared-import';
-          OB.Bridge.merge(items, { source: source, name: name }).then(function (m) {
-            alert(t('vw.jsonOk', { n: m.added, s: source }) + (m.dup ? ' (' + t('vw.jsonDup', { n: m.dup }) + ')' : ''));
-            open();
-          });
-        };
+        btn.onclick = function () { pasteModal(); };
       }
 
       if (typeof GM_registerMenuCommand === 'function') {
@@ -1374,8 +1446,7 @@
       }
       // 語言切換:若 modal 開著就重渲染
       document.addEventListener('ob-lang-change', function () {
-        var b = document.getElementById('obv');
-        if (b && b.style.display !== 'none') open();
+        if (_boxRef && _boxRef.style.display !== 'none') open();
       });
       // 備用快捷鍵:Ctrl+Shift+B 開啟檢視 modal(方便在任意網頁快速查看)
       document.addEventListener('keydown', function (e) {
