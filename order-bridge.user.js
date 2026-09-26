@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.18
+// @version      3.2.19
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -154,6 +154,7 @@
         'vw.jsonDup': '重複 {n} 個已略過',
         'vw.noneSel': '請先勾選至少一個項目',
         'vw.copied': '已複製到剪貼簿',
+        'vw.dlRec': '匯出 xlsx',
         'ui.langLabel': '語言',
         'site.fail': '失敗',
         'site.badResp': '回應異常',
@@ -267,6 +268,7 @@
         'vw.jsonDup': '重复 {n} 个已略过',
         'vw.noneSel': '请先勾选至少一个项目',
         'vw.copied': '已复制到剪贴板',
+        'vw.dlRec': '导出 xlsx',
         'ui.langLabel': '语言',
         'site.fail': '失败',
         'site.badResp': '响应异常',
@@ -380,6 +382,7 @@
         'vw.jsonDup': '{n} duplicates skipped',
         'vw.noneSel': 'Please check at least one item',
         'vw.copied': 'Copied to clipboard',
+        'vw.dlRec': 'Export xlsx',
         'ui.langLabel': 'Language',
         'site.fail': 'Failed',
         'site.badResp': 'Bad response',
@@ -996,14 +999,12 @@
         // 掛進淘寶右側工具列(#tb-toolkit-new);找不到就退回漂浮 FAB(在 admin 建立後呼叫)。
         // 工具列可能晚於腳本執行才出現,用輪詢補掛(最多 ~20s)。
         function mount() {
-          if (!admin) { if (!wrap.parentElement || wrap.parentElement === document.body) document.body.appendChild(wrap); return false; }
           var tk = document.querySelector('#tb-toolkit-new .tb-toolkit-list-new') || document.querySelector('#tb-toolkit-new');
           if (tk) {
-            wrap.classList.add('docked'); admin.classList.add('docked');
+            wrap.classList.add('docked');
             wrap.style.display = 'contents'; // 容器消失 → 兩按鈕各自佔工具列一列(各佔一行)
             var lbls = wrap.querySelectorAll('.lbl');
             for (var i = 0; i < lbls.length; i++) lbls[i].style.fontSize = '10px'; // 免被工具列 .lbl 小字體規則影響
-            admin.querySelectorAll('button').forEach(function (b) { if (b.style.fontSize) b.style.fontSize = ''; });
             tk.appendChild(wrap); return true;
           }
           if (!wrap.parentElement || wrap.parentElement === document.body) document.body.appendChild(wrap);
@@ -1060,52 +1061,13 @@
           }, 400);
         };
 
-        // ---------- 暫存管理選單(來源側:查看/編輯/匯出/刪除/清除) ----------
-        var admin = document.createElement('div');
-        admin.id = 'ob-src-admin';
-        document.body.appendChild(admin);
-
-        function renderAdmin(store) {
-          store = store || { activeId: '', records: [] };
-          var r = store.records[0];
-          var title = '<h4><span>' + t('src.adminTitle') + '</span>' +
-            '<button id="ob-src-admin-x" style="border:none;background:none;font-size:18px;cursor:pointer">✕</button></h4>';
-          if (!r) {
-            OB.utils.setHTML(admin, title +
-              '<div class="ob-rec" style="color:#999">' + t('src.empty') + '</div>')
-          } else {
-            OB.utils.setHTML(admin, title +
-              '<div class="meta" style="padding:8px 14px 0;color:#999;font-size:12px">' +
-              OB.utils.fmtTs(r.ts) + ' · ' + t('src.source', { s: r.source || '?' }) +
-              (r.items ? ' · ' + t('src.nItems', { n: r.items.length }) : '') + '</div>' +
-              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : ''))
-            var foot = document.createElement('div');
-            foot.style.cssText = 'padding:8px 14px;text-align:right;border-top:1px solid #eee';
-            OB.utils.setHTML(foot, 
-              '<button id="ob-src-admin-dl" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">' + t('src.dlBtn') + '</button>' +
-              '<button id="ob-src-admin-clear" style="padding:7px 18px;font-size:13px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>')
-            admin.appendChild(foot);
-          }
-          admin.style.display = 'block';
-          $('#ob-src-admin-x', admin).onclick = function () { admin.style.display = 'none'; };
-          var dlBtn = $('#ob-src-admin-dl');
-          if (dlBtn) dlBtn.onclick = function () { if (r) OB.utils.downloadRecord(r); };
-          var clBtn = $('#ob-src-admin-clear');
-          if (clBtn) clBtn.onclick = function () {
-            if (!confirm(t('src.clearAsk'))) return;
-            OB.Bridge.clear().then(function () { renderAdmin({ activeId: '', records: [] }); });
-          };
-        }
-        mgrBtn.onclick = function () {
-          if (admin.style.display === 'block') { admin.style.display = 'none'; return; }
-          OB.Bridge.getAll().then(renderAdmin);
-        };
+        // ---------- 暫存管理:與全網站用同一個檢視視窗(勾選/JSON 匯入匯出/xlsx/清除) ----------
+        mgrBtn.onclick = function () { OB.UI.openViewer(); };
         mount();
-        // 語言切換:更新按鈕標籤;若 admin/confirm 開著就重渲染
+        // 語言切換:更新按鈕標籤;若 confirm 開著就關掉
         document.addEventListener('ob-lang-change', function () {
           var l1 = fab.querySelector('.lbl'); if (l1 && fab.disabled !== true) l1.textContent = t('lblExport');
           var l2 = mgrBtn.querySelector('.lbl'); if (l2) l2.textContent = t('lblCache');
-          if (admin.style.display === 'block') OB.Bridge.getAll().then(renderAdmin);
           if (confirmBox.style.display === 'block') confirmBox.style.display = 'none', confirmMask.style.display = 'none';
         });
         }
@@ -1265,6 +1227,7 @@
       }
 
       function close() { var b = document.getElementById('obv'); if (b) b.style.display = 'none'; var m = document.getElementById('obv-mask'); if (m) m.style.display = 'none'; }
+      OB.UI.openViewer = open; // 供來源/站點 FAB 共用同一視窗
       function open() {
         var box = ensureDom();
         document.getElementById('obv-mask').style.display = 'block';
@@ -1293,7 +1256,8 @@
             html += '<div class="obv-rec" data-r="' + ri + '" style="margin-bottom:14px">' +
               '<div class="meta"><label style="display:inline;margin-right:8px"><input type="checkbox" class="obv-all" data-r="' + ri + '"> ' + t('vw.selectAll') + '</label>' +
               '<b>' + OB.utils.esc(r.name || r.id) + '</b>' + (st.activeId === r.id ? ' ' + t('vw.activeTag') : '') + ' · ' + t('src.source', { s: OB.utils.esc(r.source || '?') }) +
-              ' · ' + OB.utils.fmtTs(r.ts) + ' ' + t('vw.nItems', { n: items.length }) + '</div>' +
+              ' · ' + OB.utils.fmtTs(r.ts) + ' ' + t('vw.nItems', { n: items.length }) +
+              ' <button class="obv-dl" data-r="' + ri + '" style="margin-left:8px;padding:1px 8px;font-size:11px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('vw.dlRec') + '</button></div>' +
               (items.length ? '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' +
                 '<table>' + shown.map(function (it) {
                   return '<tr><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode) + '"></td>' +
@@ -1316,6 +1280,10 @@
           if (st.activeId) active = recs.find(function (r) { return r.id === st.activeId; });
           if (!active && recs.length) active = recs[0];
           document.getElementById('obv-export').onclick = function () { if (active) OB.utils.downloadRecord(active); };
+          recs.forEach(function (r) {
+            var dl = box.querySelector('.obv-dl[data-r="' + recs.indexOf(r) + '"]');
+            if (dl) dl.onclick = function () { OB.utils.downloadRecord(r); };
+          });
           document.getElementById('obv-clear').onclick = function () {
             if (!confirm(t('vw.clearAsk'))) return;
             OB.Bridge.clear().then(function () { open(); });
@@ -1517,48 +1485,11 @@
       function setStatus(html) { OB.utils.setHTML($('#ob-status'), html); }
       function setBridgeStatus(html) { OB.utils.setHTML($('#ob-bridge-status'), html); }
 
-      // ---------- 暫存管理選單 ----------
-      var admin = document.createElement('div');
-      admin.id = 'ob-admin';
-      document.body.appendChild(admin);
-
+      // ---------- 暫存管理:與全網站用同一個檢視視窗 ----------
       function refreshStore(then) {
         return OB.Bridge.getAll().then(function (s) { store = s || { activeId: '', records: [] }; if (then) then(store); });
       }
-      function renderAdmin() {
-        refreshStore(function (st) {
-          var r = (st.records || [])[0];
-          var title = '<h4><span>' + t('st.adminTitle') + '</span>' +
-            '<button id="ob-admin-x" style="border:none;background:none;font-size:18px;cursor:pointer">✕</button></h4>';
-          if (!r) {
-            OB.utils.setHTML(admin, title +
-              '<div class="ob-rec" style="color:#999">' + t('st.empty') + '</div>')
-          } else {
-            OB.utils.setHTML(admin, title +
-              '<div class="meta" style="padding:8px 14px 0;color:#999;font-size:12px">' +
-              OB.utils.fmtTs(r.ts) + ' · ' + t('src.source', { s: r.source || '?' }) +
-              (r.items ? ' · ' + t('src.nItems', { n: r.items.length }) : '') + '</div>' +
-              (r.items ? '<div class="ob-prev" style="display:block;margin:8px 14px">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : ''))
-            var foot2 = document.createElement('div');
-            foot2.style.cssText = 'padding:8px 14px;text-align:right;border-top:1px solid #eee';
-            OB.utils.setHTML(foot2, 
-              '<button id="ob-admin-dl" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;margin-right:8px">' + t('src.dlBtn') + '</button>' +
-              '<button id="ob-admin-clear" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer">' + t('src.clearBtn') + '</button>')
-            admin.appendChild(foot2);
-            $('#ob-admin-dl', admin).onclick = function () { OB.utils.downloadRecord(r); };
-            $('#ob-admin-clear', admin).onclick = function () {
-              if (!confirm(t('src.clearAsk'))) return;
-              OB.Bridge.clear().then(function () { renderAdmin(); refreshBridgeUI(); });
-            };
-          }
-          admin.style.display = 'block';
-          $('#ob-admin-x', admin).onclick = function () { admin.style.display = 'none'; };
-        });
-      }
-      fabMgr.onclick = function () {
-        if (admin.style.display === 'block') { admin.style.display = 'none'; return; }
-        renderAdmin();
-      };
+      fabMgr.onclick = function () { OB.UI.openViewer(); };
 
       // ---------- 暫存 → 解析 ----------
       async function autoLoadBridge() {
@@ -1836,7 +1767,6 @@
             });
           }
         }
-        if (admin.style.display === 'block') renderAdmin();
       });
       panel.style.display = 'none';
       refreshBridgeUI();
@@ -1845,6 +1775,8 @@
 
   // ===================== 路由 =====================
   (function boot() {
+    // 檢視視窗(暫存管理)全站安裝:任何頁面都能 Ctrl+Shift+B / TM 選單 / 「暫存」FAB 開啟
+    OB.UI.installViewer();
     var src = pickSource();
     if (src) {
       src.install({
@@ -1866,8 +1798,6 @@
           if (f) setTimeout(function () { f.click(); }, 600);
         }
       } catch (e) { }
-    } else {
-      OB.UI.installViewer();
     }
   })();
 })();
