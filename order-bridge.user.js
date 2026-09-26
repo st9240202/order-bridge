@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.17
+// @version      3.2.18
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -144,6 +144,16 @@
         'vw.activeTag': '<span style="color:#1890ff">(目前導入用)</span>',
         'vw.noItems': '(無項目)',
         'vw.readFail': '讀取失敗:{m}',
+        'vw.selectAll': '全選',
+        'vw.copyJson': '複製 JSON(勾選)',
+        'vw.pasteJson': '貼上 JSON 匯入',
+        'vw.jsonPrompt': '貼上對方傳來的 JSON 清單(會合併進暫存區):',
+        'vw.jsonOk': '已匯入 {n} 個單號(來源:{s})',
+        'vw.jsonFail': 'JSON 解析失敗:{m}',
+        'vw.jsonEmpty': 'JSON 內沒有項目',
+        'vw.jsonDup': '重複 {n} 個已略過',
+        'vw.noneSel': '請先勾選至少一個項目',
+        'vw.copied': '已複製到剪貼簿',
         'ui.langLabel': '語言',
         'site.fail': '失敗',
         'site.badResp': '回應異常',
@@ -247,6 +257,16 @@
         'vw.activeTag': '<span style="color:#1890ff">(目前导入用)</span>',
         'vw.noItems': '(无项目)',
         'vw.readFail': '读取失败:{m}',
+        'vw.selectAll': '全选',
+        'vw.copyJson': '复制 JSON(勾选)',
+        'vw.pasteJson': '粘贴 JSON 导入',
+        'vw.jsonPrompt': '粘贴对方传来的 JSON 清单(会合并进暂存区):',
+        'vw.jsonOk': '已导入 {n} 个单号(来源:{s})',
+        'vw.jsonFail': 'JSON 解析失败:{m}',
+        'vw.jsonEmpty': 'JSON 内没有项目',
+        'vw.jsonDup': '重复 {n} 个已略过',
+        'vw.noneSel': '请先勾选至少一个项目',
+        'vw.copied': '已复制到剪贴板',
         'ui.langLabel': '语言',
         'site.fail': '失败',
         'site.badResp': '响应异常',
@@ -350,6 +370,16 @@
         'vw.activeTag': '<span style="color:#1890ff">(in use for import)</span>',
         'vw.noItems': '(no items)',
         'vw.readFail': 'Read failed: {m}',
+        'vw.selectAll': 'Select all',
+        'vw.copyJson': 'Copy JSON (selected)',
+        'vw.pasteJson': 'Paste JSON to import',
+        'vw.jsonPrompt': 'Paste the JSON list you received (merged into staging):',
+        'vw.jsonOk': 'Imported {n} items (source: {s})',
+        'vw.jsonFail': 'JSON parse failed: {m}',
+        'vw.jsonEmpty': 'No items in JSON',
+        'vw.jsonDup': '{n} duplicates skipped',
+        'vw.noneSel': 'Please check at least one item',
+        'vw.copied': 'Copied to clipboard',
         'ui.langLabel': 'Language',
         'site.fail': 'Failed',
         'site.badResp': 'Bad response',
@@ -1248,23 +1278,38 @@
           var recs = st.records || [];
           var html = '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3>' + OB.i18n.langHtml();
           if (!recs.length) {
-            html += '<div class="meta">' + t('vw.emptyNote') + '</div>';
-            OB.utils.setHTML(box, html)
+            html += '<div class="meta">' + t('vw.emptyNote') + '</div>' +
+              '<div class="btns"><button id="obv-paste">' + t('vw.pasteJson') + '</button></div>';
+            OB.utils.setHTML(box, html);
             box.querySelector('[data-x]').onclick = close;
             OB.i18n.bindLangSel(box);
+            bindPaste(box);
             return;
           }
-          recs.forEach(function (r) {
-            html += '<div style="margin-bottom:14px">' +
-              '<div class="meta"><b>' + OB.utils.esc(r.name || r.id) + (st.activeId === r.id ? ' ' + t('vw.activeTag') : '') + ' · ' + t('src.source', { s: OB.utils.esc(r.source || '?') }) +
-              ' · ' + OB.utils.fmtTs(r.ts) + (r.items ? ' ' + t('vw.nItems', { n: r.items.length }) : '') + '</div>' +
-              (r.items && r.items.length ? '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' + OB.utils.itemsPreviewHtml(r.items) + '</div>' : '<div class="meta">' + t('vw.noItems') + '</div>') +
+          var MAX = 50;
+          recs.forEach(function (r, ri) {
+            var items = r.items || [];
+            var shown = items.slice(0, MAX);
+            html += '<div class="obv-rec" data-r="' + ri + '" style="margin-bottom:14px">' +
+              '<div class="meta"><label style="display:inline;margin-right:8px"><input type="checkbox" class="obv-all" data-r="' + ri + '"> ' + t('vw.selectAll') + '</label>' +
+              '<b>' + OB.utils.esc(r.name || r.id) + '</b>' + (st.activeId === r.id ? ' ' + t('vw.activeTag') : '') + ' · ' + t('src.source', { s: OB.utils.esc(r.source || '?') }) +
+              ' · ' + OB.utils.fmtTs(r.ts) + ' ' + t('vw.nItems', { n: items.length }) + '</div>' +
+              (items.length ? '<div style="margin:6px 0;border:1px solid #eee;border-radius:4px;max-height:260px;overflow:auto">' +
+                '<table>' + shown.map(function (it) {
+                  return '<tr><td class="c-ck"><input type="checkbox" class="obv-sel" data-r="' + ri + '" data-b="' + OB.utils.esc(it.billcode) + '"></td>' +
+                    '<td class="c-bill">' + OB.utils.esc(it.billcode) + '</td>' +
+                    '<td>' + OB.utils.esc(it.goods || '') + (it.company ? ' <span style="color:#999">(' + OB.utils.esc(it.company) + ')</span>' : '') + '</td></tr>';
+                }).join('') + '</table>' +
+                (items.length > MAX ? '<div class="more" style="color:#999;font-size:12px;padding:4px 8px">…' + t('prev.more', { n: items.length - MAX }) + '(全選=全部 ' + items.length + ' 項)</div>' : '') +
+              '</div>' : '<div class="meta">' + t('vw.noItems') + '</div>') +
               '</div>';
           });
           html += '<div class="btns">' +
+            '<button id="obv-copy">' + t('vw.copyJson') + '</button>' +
+            '<button id="obv-paste">' + t('vw.pasteJson') + '</button>' +
             '<button id="obv-export">' + t('vw.exportAll') + '</button>' +
             '<button id="obv-clear" class="danger">' + t('vw.clear') + '</button></div>';
-          OB.utils.setHTML(box, html)
+          OB.utils.setHTML(box, html);
           box.querySelector('[data-x]').onclick = close;
           OB.i18n.bindLangSel(box);
           var active = null;
@@ -1275,12 +1320,82 @@
             if (!confirm(t('vw.clearAsk'))) return;
             OB.Bridge.clear().then(function () { open(); });
           };
+          // 全選 checkbox:勾上 = 該記錄全部 items;同步該記錄的行級 checkbox
+          recs.forEach(function (r, ri) {
+            var allCb = box.querySelector('.obv-all[data-r="' + ri + '"]');
+            if (!allCb) return;
+            allCb.addEventListener('change', function () {
+              box.querySelectorAll('.obv-sel[data-r="' + ri + '"]').forEach(function (cb) { cb.checked = allCb.checked; });
+            });
+          });
+          // 複製勾選項目為 JSON(給他人貼上匯入)
+          document.getElementById('obv-copy').onclick = function () {
+            var picked = []; // {billcode, goods, company}
+            var source = (active && active.source) || 'shared';
+            recs.forEach(function (r, ri) {
+              var allCb = box.querySelector('.obv-all[data-r="' + ri + '"]');
+              var items = r.items || [];
+              if (allCb && allCb.checked) {
+                items.forEach(function (it) { picked.push(it); });
+              } else {
+                box.querySelectorAll('.obv-sel[data-r="' + ri + '"]:checked').forEach(function (cb) {
+                  var b = cb.getAttribute('data-b');
+                  var it = items.find(function (x) { return x.billcode === b; });
+                  if (it) picked.push(it);
+                });
+              }
+            });
+            if (!picked.length) {
+              OB.utils.notify(t('vw.noneSel'));
+              return;
+            }
+            var payload = { ob: 'order-bridge/1', source: source, items: picked.map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; }) };
+            var txt = JSON.stringify(payload);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(txt).then(function () { OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); },
+                function () { legacyCopy(txt); OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); });
+            } else { legacyCopy(txt); OB.utils.notify(t('vw.copied') + ' (' + picked.length + ')'); }
+            function legacyCopy(s) {
+              try {
+                var ta = document.createElement('textarea');
+                ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                document.execCommand('copy');
+                ta.parentNode.removeChild(ta);
+              } catch (e) { prompt(t('vw.jsonPrompt'), s); }
+            }
+          };
+          bindPaste(box);
           return;
         }).catch(function (e) {
           OB.utils.setHTML(box, '<h3><span>' + t('vw.titleFull') + '</span><span class="x" data-x>✕</span></h3><div class="meta" style="color:#cf1322">' + t('vw.readFail', { m: OB.utils.esc(e.message) }) + '</div>' + OB.i18n.langHtml())
           box.querySelector('[data-x]').onclick = close;
           OB.i18n.bindLangSel(box);
+          bindPaste(box);
         });
+      }
+
+      // 貼上 JSON → 合併進暫存區(接收方)
+      function bindPaste(root) {
+        var btn = (root || document).querySelector && (root || document).querySelector('#obv-paste');
+        if (!btn || btn.__obBound) return;
+        btn.__obBound = true;
+        btn.onclick = function () {
+          var txt = prompt(t('vw.jsonPrompt'), '');
+          if (txt == null) return;
+          var data;
+          try { data = JSON.parse(txt); } catch (e) { alert(t('vw.jsonFail', { m: e.message })); return; }
+          var items = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
+          items = items.filter(function (it) { return it && typeof it.billcode === 'string'; })
+            .map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; });
+          if (!items.length) { alert(t('vw.jsonEmpty')); return; }
+          var source = (data && !Array.isArray(data) && data.source) || 'shared';
+          var name = (data && !Array.isArray(data) && data.name) || 'shared-import';
+          OB.Bridge.merge(items, { source: source, name: name }).then(function (m) {
+            alert(t('vw.jsonOk', { n: m.added, s: source }) + (m.dup ? ' (' + t('vw.jsonDup', { n: m.dup }) + ')' : ''));
+            open();
+          });
+        };
       }
 
       if (typeof GM_registerMenuCommand === 'function') {

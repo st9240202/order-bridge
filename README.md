@@ -78,3 +78,11 @@ OB.UI       (面板/FAB/預覽/暫存管理)
 - 手動 API:`window.__OB_I18N.setLang('en'|'zh-TW'|'zh-CN')`
 
 > 技術:`OB.utils.setHTML(el, html)` 對 CSP 嚴格的頁面(如 YouTube 的 TrustedHTML)會自動退回純 DOM 解析(`elFromHTML`),確保檢視視窗在**任何網頁**都能開啟。
+
+## JSON 分享(複製/貼上匯入)
+
+檢視視窗(任何網頁 `Ctrl+Shift+B` 或 TM 選單)內:
+
+- 每筆記錄可勾「全選」或勾個別單號 → **複製 JSON(勾選)** → 傳給對方
+  格式:`{"ob":"order-bridge/1","source":"...","items":[{"billcode","goods","company"}]}`
+- 接收方開檢視視窗 → **貼上 JSON 匯入** → 貼上文字 → 自動合併進暫存區(來源欄位照原樣,可再導入聖天)
