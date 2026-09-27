@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.22
+// @version      3.2.23
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -130,6 +130,9 @@
         'st.titleImport': '導入訂單 → {s}',
         'st.titleCache': '暫存管理',
         'st.lblImport': '導入',
+        'st.lblCache': '暫存',
+        'st.delAfter': '導入並刪除',
+        'st.delAfterDone': '已導入 {n} 筆並從暫存刪除',
         'vw.menuTitle': '📋 檢視 Order Bridge 暫存清單',
         'vw.title': '📦 Order Bridge 暫存記錄',
         'vw.exportAll': '全部匯出 xlsx',
@@ -298,6 +301,9 @@
         'st.titleImport': '导入订单 → {s}',
         'st.titleCache': '暂存管理',
         'st.lblImport': '导入',
+        'st.lblCache': '暂存',
+        'st.delAfter': '导入并删除',
+        'st.delAfterDone': '已导入 {n} 笔并从暂存删除',
         'vw.menuTitle': '📋 查看 Order Bridge 暂存清单',
         'vw.title': '📦 Order Bridge 暂存记录',
         'vw.exportAll': '全部导出 xlsx',
@@ -466,6 +472,9 @@
         'st.titleImport': 'Import orders → {s}',
         'st.titleCache': 'Staging manager',
         'st.lblImport': 'Import',
+        'st.lblCache': 'Cache',
+        'st.delAfter': 'Import & Delete',
+        'st.delAfterDone': 'Imported {n} and removed from staging',
         'vw.menuTitle': '📋 View Order Bridge staged records',
         'vw.title': '📦 Order Bridge staged records',
         'vw.exportAll': 'Export all (xlsx)',
