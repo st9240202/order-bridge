@@ -1,0 +1,39 @@
+name: Publish to GreasyFork
+
+# 打 tag 才發布,例如:
+#   git tag v3.2.24 && git push origin v3.2.24
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload new version to GreasyFork
+        env:
+          GF_SCRIPT_ID: ${{ secrets.GF_SCRIPT_ID }}
+          GF_PASSWORD: ${{ secrets.GF_PASSWORD }}
+        run: |
+          FILE=order-bridge.user.js
+          VER=$(grep -m1 -oE '@version[[:space:]]+[^ ]+' "$FILE" | awk '{print $2}')
+          echo "Uploading $FILE v$VER to greasyfork.org/scripts/$GF_SCRIPT_ID"
+
+          # 官方 API:建立新版本。成功回 302 (redirect 到腳本頁)
+          CODE=$(curl -sS -o resp.txt -w '%{http_code}' \
+            -F "version=$VER" \
+            -F "changelog=auto publish via GitHub Actions (tag ${GITHUB_REF#refs/tags/})" \
+            -F "password=$GF_PASSWORD" \
+            -F "script=<$FILE" \
+            "https://greasyfork.org/scripts/$GF_SCRIPT_ID/versions")
+
+          echo "HTTP $CODE"
+          cat resp.txt 2>/dev/null | head -5
+
+          case "$CODE" in
+            200|302) echo "✅ Published v$VER to GreasyFork" ;;
+            *) echo "❌ Upload failed (HTTP $CODE)"; exit 1 ;;
+          esac

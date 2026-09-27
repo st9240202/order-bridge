@@ -10,6 +10,11 @@
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
 // @description  通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
+// @description:zh-TW 通用訂單 xlsx 跨站橋:輸入端 OB.Sources(暫存/管理)+ 輸出端 OB.Sites(適配器)。現含:淘寶 → 聖天集運。擴充新站點只需加一個 Source/Site 定義。
+// @description:zh-CN 通用订单 xlsx 跨站桥:输入端 OB.Sources(暂存/管理)+ 输出端 OB.Sites(适配器)。现含:淘宝 → 圣天集运。扩充新站点只需加一个 Source/Site 定义。
+// @description:ja   汎用注文 xlsx クロスサイトブリッジ:入力端 OB.Sources(ステージング/管理)+ 出力端 OB.Sites(アダプタ)。現在:タオバオ → センテン集運。新サイトの追加は Source/Site 定義1つだけでOK。
+// @description:en   Generic order-xlsx cross-site bridge: input side OB.Sources (staging/admin) + output side OB.Sites (adapters). Currently: Taobao -> St. Tian Freight (stjh168). Adding a new site only requires one Source/Site definition.
+// @license         MIT
 // @homepage     https://github.com/st9240202/order-bridge
 // @source       https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
 // @downloadURL  https://raw.githubusercontent.com/st9240202/order-bridge/main/order-bridge.user.js
