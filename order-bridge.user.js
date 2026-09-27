@@ -4,7 +4,7 @@
 // @name:zh-CN   订单跨站导入桥 (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.21
+// @version      3.2.22
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -153,6 +153,7 @@
         'vw.jsonEmpty': 'JSON 內沒有項目',
         'vw.jsonDup': '重複 {n} 個已略過',
         'vw.noneSel': '請先勾選至少一個項目',
+        'vw.copyFail': '複製失敗,請手動複製',
         'vw.copied': '已複製到剪貼簿',
         'vw.dlRec': '匯出 xlsx',
         'vw.pasteTitle': '貼上 JSON 匯入',
@@ -320,6 +321,7 @@
         'vw.jsonEmpty': 'JSON 内没有项目',
         'vw.jsonDup': '重复 {n} 个已略过',
         'vw.noneSel': '请先勾选至少一个项目',
+        'vw.copyFail': '复制失败,请手动复制',
         'vw.copied': '已复制到剪贴板',
         'vw.dlRec': '导出 xlsx',
         'vw.pasteTitle': '粘贴 JSON 导入',
@@ -487,6 +489,7 @@
         'vw.jsonEmpty': 'No items in JSON',
         'vw.jsonDup': '{n} duplicates skipped',
         'vw.noneSel': 'Please check at least one item',
+        'vw.copyFail': 'Copy failed, please copy manually',
         'vw.copied': 'Copied to clipboard',
         'vw.dlRec': 'Export xlsx',
         'vw.pasteTitle': 'Paste JSON to import',
@@ -1622,8 +1625,10 @@
             });
             box.addEventListener('click', function (e) {
               var el = e.target;
-              if (!el || !el.classList) return;
+              if (!el) return;
               if (!_viewRecs) return;
+              if (el.id === 'obv-copy') { copySelectedJson(); return; }
+              if (!el.classList) return;
               if (el.classList.contains('obv-rowdel')) {
                 var ri = parseInt(el.getAttribute('data-r'), 10), ii = parseInt(el.getAttribute('data-ii'), 10);
                 var r = _viewRecs[ri];
@@ -1787,6 +1792,51 @@
             open();
           });
         };
+      }
+      // 複製勾選項目為 JSON(給接收方貼上匯入)→ toast 成功/失敗提示
+      function copySelectedJson() {
+        if (!_viewBox || !_viewRecs) return;
+        var picked = []; // {billcode, goods, company}
+        _viewRecs.forEach(function (r, ri) {
+          var allCb = _viewBox.querySelector('.obv-all[data-r="' + ri + '"]');
+          var items = r.items || [];
+          if (allCb && allCb.checked) {
+            items.forEach(function (it) { picked.push(it); });
+          } else {
+            _viewBox.querySelectorAll('.obv-sel[data-r="' + ri + '"]:checked').forEach(function (cb) {
+              var b = cb.getAttribute('data-b');
+              var it = items.find(function (x) { return x.billcode === b; });
+              if (it) picked.push(it);
+            });
+          }
+        });
+        if (!picked.length) { toastMsg(t('vw.noneSel')); return; }
+        var payload = { ob: 'order-bridge/1', items: picked.map(function (it) { return { billcode: it.billcode, goods: it.goods || '', company: it.company || '' }; }) };
+        var txt = JSON.stringify(payload);
+        function legacy(s) {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy');
+            ta.parentNode.removeChild(ta);
+            return ok;
+          } catch (e) {
+            var r = prompt(t('vw.jsonPrompt'), s);
+            return r !== null;
+          }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(
+            function () { toastMsg(t('vw.copied') + ' (' + picked.length + ')'); },
+            function () {
+              var ok = legacy(txt);
+              toastMsg(ok ? t('vw.copied') + ' (' + picked.length + ')' : t('vw.copyFail'));
+            });
+        } else {
+          var ok2 = legacy(txt);
+          toastMsg(ok2 ? t('vw.copied') + ' (' + picked.length + ')' : t('vw.copyFail'));
+        }
       }
       // 貼上 JSON 按鈕 → 自製 modal(pasteModal 定義於 ensureDom 之後)
       function bindPaste(root) {
