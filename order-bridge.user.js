@@ -5,7 +5,7 @@
 // @name:ja       注文クロスサイトブリッジ (Order Bridge)
 // @name:en      Order Bridge
 // @namespace    https://tampermonkey.net/
-// @version      3.2.24
+// @version      3.2.25
 // @match        https://buyertrade.taobao.com/trade/itemlist/*
 // @match        http://member.stjh168.com/Member/MyPack
 // @match        *://*/*
@@ -61,7 +61,9 @@
         'prev.noData': '(無資料)',
         'prev.more': '… 其餘 {n} 個單號',
         'parse.noData': '檔案沒有資料',
-        'parse.noCols': '找不到「商品名稱/物流單號」欄位,請確認檔案格式',
+        'parse.noCols': '找不到「商品名稱/物流單號」欄位(未發貨訂單無物流欄位,請切「待收貨」分頁導出)',
+        'parse.noBill': '找不到有效物流單號(未發貨訂單無單號,請切「待收貨」分頁導出)',
+        'parse.noBill': '找不到有效物流單號(未發貨訂單無單號,請切「待收貨」分頁導出)',
         'parse.rowBad': '第{n}行單號異常:{b}',
         'parse.sheetjs': 'SheetJS 未載入',
         'src.parseFail': '⚠ 解析失敗({f}:{m}),未存入',
@@ -200,7 +202,9 @@
         'prev.noData': '(无数据)',
         'prev.more': '… 其余 {n} 个单号',
         'parse.noData': '文件没有数据',
-        'parse.noCols': '找不到“商品名称/物流单号”字段,请确认文件格式',
+        'parse.noCols': '找不到“商品名称/物流单号”字段(未发货订单无物流字段,请切“待收货”页签导出)',
+        'parse.noBill': '找不到有效物流单号(未发货订单无单号,请切“待收货”页签导出)',
+        'parse.noBill': '找不到有效物流单号(未发货订单无单号,请切“待收货”页签导出)',
         'parse.rowBad': '第{n}行单号异常:{b}',
         'parse.sheetjs': 'SheetJS 未加载',
         'src.parseFail': '⚠ 解析失败({f}:{m}),未存入',
@@ -339,7 +343,9 @@
         'prev.noData': '(no data)',
         'prev.more': '… {n} more tracking no.',
         'parse.noData': 'File has no data',
-        'parse.noCols': '“product name / tracking no.” columns not found; check file format',
+        'parse.noCols': '“product name / tracking no.” columns not found (unshipped orders have none — export from the “wait for delivery” tab)',
+        'parse.noBill': 'No valid tracking numbers found (unshipped orders have none — export from the “wait for delivery” tab)',
+        'parse.noBill': 'No valid tracking numbers (unshipped orders have none — export from the “wait for delivery” tab)',
         'parse.rowBad': 'Row {n}: invalid tracking number {b}',
         'parse.sheetjs': 'SheetJS not loaded',
         'src.parseFail': '⚠ Parse failed ({f}: {m}) — not stored',
@@ -581,7 +587,9 @@
         'vw.ok': 'OK',
                 'lblCache': '暫存',
         'lblExport': 'エクスポート',
-        'parse.noCols': '「商品名/伝票番号」列が見つかりません。ファイル形式を確認してください',
+        'parse.noCols': '「商品名/伝票番号」列が見つかりません(未発送注文には物流列がありません。「受取待ち」タブからエクスポートしてください)',
+        'parse.noBill': '有効な伝票番号がありません(未発送注文には伝票番号がありません。「受取待ち」タブからエクスポートしてください)',
+        'parse.noBill': '有効な伝票番号がありません(未発送注文には伝票番号がありません。「受取待ち」タブからエクスポートしてください)',
         'parse.noData': 'ファイルにデータがありません',
         'parse.rowBad': '行 {n}: 伝票番号が不正です {b}',
         'parse.sheetjs': 'SheetJS が読み込まれていません',
@@ -719,7 +727,20 @@
     }
   }
   function billcodeValid(s) { return typeof s === 'string' && /^[0-9A-Za-z]{8,20}$/.test(s); }
+  var _notifyTimer = null;
   function notify(text) {
+    // 優先:頁內 toast(任何站點/世界都看得到);備援:GM_notify;再備援:console
+    var el = null;
+    try { el = document.getElementById('ob-toast'); } catch (e) { }
+    if (el) {
+      try {
+        el.textContent = text;
+        el.classList.add('show');
+        if (_notifyTimer) clearTimeout(_notifyTimer);
+        _notifyTimer = setTimeout(function () { el.classList.remove('show'); }, 4000);
+        return;
+      } catch (e) { }
+    }
     try { if (typeof GM_notify === 'function') { GM_notify({ title: t('notify.title'), text: text, priority: 2 }); return; } } catch (e) { }
     console.log('[OrderBridge]' + text);
   }
@@ -808,10 +829,11 @@
     var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
     if (!rows.length) return { items: [], errors: [t('parse.noData')] };
     var header = (rows[0] || []).map(function (h) { return String(h).trim(); });
+    // 用 indexOf> -1 而非 ===0:淘寶新版表頭會帶附註(如「物流單號(當前僅支持未完結訂單)」)
     function colIdx(prefixes) {
       for (var i = 0; i < header.length; i++)
         for (var p = 0; p < prefixes.length; p++)
-          if (header[i].indexOf(prefixes[p]) === 0) return i;
+          if (header[i].indexOf(prefixes[p]) > -1) return i;
       return -1;
     }
     var cName = colIdx(['商品名称', '商品名稱']);
@@ -837,6 +859,7 @@
       var g = groups[k];
       return { billcode: g.billcode, company: g.company || '', goods: g.names.join('、').slice(0, GOODS_NAME_MAX), rawNames: g.names };
     });
+    if (!items.length && !errors.length) errors.push(t('parse.noBill'));
     return { items: items, errors: errors };
   }
   OB.Parser = { parseWorkbook: parseWorkbook, GOODS_NAME_MAX: GOODS_NAME_MAX };
