@@ -46,18 +46,23 @@ const wait = Number(process.argv[2] || 25);
     await new Promise((r) => setTimeout(r, 4000));
   }
 
-  const fin = await tb.evaluate(() => ({
-    bridge: (localStorage.getItem('ob_bridge_v1') || '').substring(0, 400),
-    toast: (document.getElementById('ob-toast') || {}).textContent || '',
-  }));
+  const fin = await tb.evaluate(() => {
+    let n = 0;
+    try { const s = JSON.parse(localStorage.getItem('ob_bridge_v1') || 'null'); n = s && s.records ? s.records.length : 0; } catch (e) { }
+    return {
+      bridge: (localStorage.getItem('ob_bridge_v1') || '').substring(0, 400),
+      recCount: n,
+      toast: (document.getElementById('ob-toast') || {}).textContent || '',
+    };
+  });
   console.log('after bridge:', fin.bridge);
   console.log('after toast :', fin.toast);
+  console.log('recCount    :', fin.recCount);
   console.log('===== CONSOLE =====');
   logs.forEach((l) => console.log(' ', l));
   if (!logs.length) console.log('  (empty)');
 
-  const recs = (() => { try { return JSON.parse(localStorage.getItem('ob_bridge_v1') || 'null') || {}; } catch (e) { return null; } })();
-  const ok = recs && recs.records && recs.records.length > 0;
+  const ok = fin.recCount > 0;
   console.log(ok ? '✅ PASS: bridge 有記錄' : '❌ FAIL: bridge 沒有記錄(看上面 toast/console)');
   await browser.close();
   process.exit(ok ? 0 : 1);

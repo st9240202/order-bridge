@@ -131,11 +131,17 @@ OB.UI       (面板 / FAB / 預覽 / 全站檢視視窗 / 四語 i18n)
 
 ## 開發
 
+開發者/agent 請先讀 [dev/DEV.md](dev/DEV.md)(環境與工具)和 [dev/LESSONS.md](dev/LESSONS.md)(踩坑大全)。
+
 ```bash
 git clone https://github.com/st9240202/order-bridge.git
 cd order-bridge
 
 # 改 script 後:
+node --check order-bridge.user.js     # 語法
+node dev/check-i18n.js                # 四語 i18n 對齊檢查
+node dev/tools/deploy-tm.js           # 部署到本機 TM(需 CDP)
+node dev/tools/e2e-taobao.js          # 淘寶端到端測試(詳見 DEV.md §5 開發循環)
 git add -A && git commit -m "..." && git push
 
 # 使用者端更新:TM dashboard 按「檢查更新」,或瀏覽器開 raw 連結
